@@ -1,0 +1,2353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GroWise — Test UI</title>
+  <style>
+
+/* ── Guide sections ── */
+.guide-section {
+  margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #E0E0E0;
+}
+.guide-section-header {
+  background: #1B5E20;
+  color: white;
+  padding: 10px 14px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+.guide-section-header:hover {
+  background: #2E7D32;
+}
+.guide-section-body {
+  padding: 14px;
+  background: white;
+}
+
+.guide-step {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F5F5F5;
+}
+.guide-step:last-child { border-bottom: none; }
+.guide-step-num {
+  min-width: 26px;
+  height: 26px;
+  background: #2E7D32;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.guide-step-content { flex: 1; }
+.guide-step-title {
+  font-weight: bold;
+  color: #1B5E20;
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+.guide-step-action {
+  font-size: 13px;
+  color: #424242;
+  line-height: 1.5;
+}
+.guide-step-why {
+  font-size: 12px;
+  color: #1565C0;
+  background: #E3F2FD;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-top: 4px;
+}
+.guide-step-tip {
+  font-size: 12px;
+  color: #E65100;
+  background: #FFF3E0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-top: 4px;
+}
+
+.guide-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #F5F5F5;
+  font-size: 13px;
+  gap: 8px;
+}
+.guide-item-row:last-child { border-bottom: none; }
+.guide-item-name { font-weight: bold; color: #424242; flex: 1; }
+.guide-item-detail { color: #757575; text-align: right; font-size: 12px; }
+
+.guide-spec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.guide-spec-box {
+  background: #F5F5F5;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.guide-spec-box .gsv {
+  font-size: 15px;
+  font-weight: bold;
+  color: #1B5E20;
+  display: block;
+}
+.guide-spec-box .gsk {
+  font-size: 11px;
+  color: #757575;
+}
+
+.guide-care-block {
+  background: #F9FBF9;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.guide-care-title {
+  font-weight: bold;
+  color: #1B5E20;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.guide-care-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0;
+  border-bottom: 1px solid #E8F5E9;
+}
+.guide-care-row:last-child { border-bottom: none; }
+.guide-care-key { color: #757575; font-weight: bold; }
+.guide-care-val { color: #424242; text-align: right; max-width: 60%; }
+
+.guide-tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guide-tag-item {
+  background: #F1F8E9;
+  border-left: 3px solid #2E7D32;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #424242;
+}
+
+.guide-overview {
+  background: #E8F5E9;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 14px;
+  color: #1B5E20;
+  line-height: 1.6;
+  margin-top: 12px;
+  border-left: 4px solid #2E7D32;
+}
+
+.guide-cached-note {
+  font-size: 11px;
+  color: #757575;
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* ── When to Plant ── */
+.window-card {
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  border-left: 6px solid;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.window-card.excellent { border-color: #FFD700; background: #FFFEF5; }
+.window-card.good      { border-color: #2E7D32; background: #F1F8E9; }
+.window-card.acceptable { border-color: #1565C0; background: #E3F2FD; }
+
+.window-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin-top: 12px;
+}
+@media (min-width: 600px) {
+  .score-grid { grid-template-columns: repeat(7, 1fr); }
+}
+
+.score-cell {
+  border-radius: 6px;
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 10px;
+  cursor: default;
+}
+.score-cell.excellent  { background: #E8F5E9; color: #2E7D32; }
+.score-cell.good       { background: #F1F8E9; color: #2E7D32; }
+.score-cell.acceptable { background: #E3F2FD; color: #1565C0; }
+.score-cell.poor       { background: #FFF3E0; color: #E65100; }
+.score-cell.blocked    { background: #FFEBEE; color: #B71C1C; }
+.score-cell.very-poor  { background: #F5F5F5; color: #9E9E9E; }
+
+    /* ── Crop card ── */
+.crop-card {
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  border-left: 5px solid;
+  background: white;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.crop-card.rank-1 { border-color: #FFD700; background: #FFFEF5; }
+.crop-card.rank-2 { border-color: #C0C0C0; background: #FAFAFA; }
+.crop-card.rank-3 { border-color: #CD7F32; background: #FFF8F5; }
+.crop-card.rank-other { border-color: #2E7D32; background: #FAFFFE; }
+
+.crop-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 13px;
+  margin-right: 6px;
+}
+.rank-1 .crop-rank-badge { background: #FFD700; color: #5D4037; }
+.rank-2 .crop-rank-badge { background: #C0C0C0; color: #424242; }
+.rank-3 .crop-rank-badge { background: #CD7F32; color: white; }
+.rank-other .crop-rank-badge { background: #2E7D32; color: white; }
+
+.crop-name-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.crop-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1B5E20;
+}
+.crop-local {
+  font-size: 12px;
+  color: #757575;
+  margin-left: 6px;
+}
+
+.crop-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.crop-stat {
+  background: #F5F5F5;
+  border-radius: 8px;
+  padding: 5px 10px;
+  text-align: center;
+  flex: 1;
+  min-width: 60px;
+}
+.crop-stat .csv {
+  font-size: 13px;
+  font-weight: bold;
+  display: block;
+  color: #1B5E20;
+}
+.crop-stat .csk {
+  font-size: 10px;
+  color: #757575;
+}
+
+.crop-why {
+  font-size: 13px;
+  color: #424242;
+  line-height: 1.6;
+  background: #F9FBF9;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid #A5D6A7;
+}
+
+.crop-concern {
+  font-size: 12px;
+  color: #E65100;
+  background: #FFF3E0;
+  border-radius: 6px;
+  padding: 5px 10px;
+  margin-bottom: 6px;
+}
+
+.crop-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.crop-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+.crop-tag.flood  { background: #E3F2FD; color: #1565C0; }
+.crop-tag.drought{ background: #E8F5E9; color: #2E7D32; }
+.crop-tag.diff   { background: #F3E5F5; color: #6A1B9A; }
+.crop-tag.suit   { background: #E8F5E9; color: #2E7D32; }
+.crop-tag.suit.fair { background: #FFF3E0; color: #E65100; }
+.crop-tag.suit.poor { background: #FFEBEE; color: #B71C1C; }
+
+.conf-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.conf-row .conf-label {
+  font-size: 11px;
+  color: #757575;
+  min-width: 80px;
+}
+.conf-row .conf-track {
+  flex: 1;
+  background: #E0E0E0;
+  border-radius: 4px;
+  height: 5px;
+}
+.conf-row .conf-fill {
+  height: 5px;
+  border-radius: 4px;
+}
+.conf-row .conf-pct {
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 35px;
+  text-align: right;
+}
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:#F1F8E9;color:#424242;min-height:100vh}
+
+    .header{background:#1B5E20;padding:18px 24px}
+    .header h1{color:white;font-size:24px;font-weight:bold}
+    .header p{color:#A5D6A7;font-size:13px;margin-top:2px}
+
+    .container{max-width:600px;margin:0 auto;padding:20px 16px}
+
+    .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+    .tab{padding:8px 16px;border-radius:20px;border:2px solid #2E7D32;
+         background:white;color:#2E7D32;cursor:pointer;font-weight:bold;
+         font-size:13px;transition:all .2s}
+    .tab.active{background:#2E7D32;color:white}
+    .tab:hover:not(.active){background:#E8F5E9}
+
+    .card{background:white;border-radius:14px;padding:24px;
+          box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:16px}
+    .card h2{color:#1B5E20;font-size:19px;margin-bottom:18px}
+
+    .form-group{margin-bottom:15px}
+    label{display:block;font-size:12px;font-weight:bold;color:#616161;
+          margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+    input,select{width:100%;padding:11px 14px;border:1.5px solid #E0E0E0;
+                 border-radius:8px;font-size:14px;color:#424242;
+                 background:#FAFAFA;outline:none;transition:border .2s}
+    input:focus,select:focus{border-color:#2E7D32;background:white}
+    .row{display:flex;gap:10px}
+    .row .form-group{flex:1}
+
+    .btn{width:100%;padding:13px;background:#2E7D32;color:white;border:none;
+         border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;
+         margin-top:6px;transition:background .2s}
+    .btn:hover{background:#1B5E20}
+    .btn:disabled{background:#A5D6A7;cursor:not-allowed}
+    .btn-teal{background:#00695C}
+    .btn-teal:hover{background:#004D40}
+
+    .status-bar{padding:10px 14px;border-radius:8px;font-size:13px;
+                font-weight:bold;margin-top:12px;display:none}
+    .status-bar.show{display:block}
+    .status-bar.success{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7}
+    .status-bar.error{background:#FFEBEE;color:#B71C1C;border:1px solid #FFCDD2}
+    .status-bar.loading{background:#E3F2FD;color:#1565C0;border:1px solid #BBDEFB}
+
+    .info-box{padding:10px 14px;border-radius:8px;font-size:13px;
+              margin-bottom:16px;border-left:4px solid}
+    .info-box.blue{background:#E3F2FD;color:#1565C0;border-color:#1565C0}
+    .info-box.green{background:#E8F5E9;color:#2E7D32;border-color:#2E7D32}
+    .info-box.orange{background:#FFF3E0;color:#E65100;border-color:#E65100}
+
+    .token-box{background:#F1F8E9;border:1px solid #A5D6A7;border-radius:8px;
+               padding:12px 14px;margin-top:12px;display:none}
+    .token-box .tlabel{font-size:11px;color:#757575;font-weight:bold;
+                       text-transform:uppercase;margin-bottom:4px}
+    .token-box .tval{font-family:monospace;font-size:11px;
+                     color:#1B5E20;word-break:break-all}
+
+    .profile-card{background:#F9FBF9;border:1px solid #C8E6C9;
+                  border-radius:10px;padding:16px;margin-top:12px}
+    .profile-card .field{display:flex;justify-content:space-between;
+                         align-items:center;padding:7px 0;
+                         border-bottom:1px solid #E8F5E9;font-size:13px}
+    .profile-card .field:last-child{border-bottom:none}
+    .profile-card .key{color:#757575;font-weight:bold}
+    .profile-card .val{color:#1B5E20;font-weight:bold;text-align:right}
+
+    .badge{display:inline-block;padding:3px 10px;border-radius:10px;
+           font-size:12px;font-weight:bold}
+    .badge.green{background:#2E7D32;color:white}
+    .badge.teal{background:#00695C;color:white}
+    .badge.blue{background:#1565C0;color:white}
+    .badge.orange{background:#E65100;color:white}
+    .badge.grey{background:#757575;color:white}
+
+    .divider{border:none;border-top:1px solid #E0E0E0;margin:16px 0}
+
+    .section{display:none}
+    .section.active{display:block}
+
+    .user-pill{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:20px;
+               padding:6px 14px;font-size:13px;color:#1B5E20;font-weight:bold;
+               display:none;margin-bottom:16px;text-align:center}
+    .user-pill.show{display:block}
+
+    /* ── Weather Calendar ── */
+    .week-header{font-size:13px;font-weight:bold;color:#1B5E20;
+                 margin:16px 0 8px;padding:8px 12px;border-radius:8px}
+    .week-accurate { background:#E8F5E9; border-left:4px solid #2E7D32; }
+    .week-predicted{ background:#E3F2FD; border-left:4px solid #1565C0; }
+    .week-estimated{ background:#F5F5F5; border-left:4px solid #9E9E9E; }
+
+    .day-card{border-radius:10px;padding:14px;margin-bottom:8px;
+              border-left:5px solid;position:relative}
+    .day-card.accurate { background:#FAFFFE; border-color:#2E7D32; }
+    .day-card.predicted{ background:#F8FBFF; border-color:#1565C0; }
+    .day-card.estimated{ background:#FAFAFA; border-color:#9E9E9E; }
+
+    .day-card-top{display:flex;align-items:center;
+                  justify-content:space-between;margin-bottom:8px}
+    .day-num-badge{font-size:11px;font-weight:bold;color:#757575;
+                   background:#F5F5F5;border-radius:6px;
+                   padding:2px 8px;min-width:36px;text-align:center}
+    .day-date-label{font-size:14px;font-weight:bold;color:#424242}
+    .day-icon{font-size:22px}
+    .day-zone-tag{font-size:10px;padding:2px 7px;border-radius:8px;
+                  font-weight:bold}
+    .day-zone-tag.accurate { background:#E8F5E9; color:#2E7D32; }
+    .day-zone-tag.predicted{ background:#E3F2FD; color:#1565C0; }
+    .day-zone-tag.estimated{ background:#F5F5F5; color:#9E9E9E; }
+
+    .day-main-stats{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+    .day-stat-box{background:white;border:1px solid #E0E0E0;border-radius:8px;
+                  padding:6px 10px;text-align:center;flex:1;min-width:55px}
+    .day-stat-box .sv{font-size:14px;font-weight:bold;display:block}
+    .day-stat-box .sk{font-size:10px;color:#757575}
+
+    .day-extra-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+    .day-extra-chip{font-size:11px;background:#F5F5F5;border-radius:6px;
+                    padding:3px 8px;color:#616161}
+    .day-extra-chip b{color:#424242}
+    .day-extra-chip.na{color:#BDBDBD}
+
+    .conf-wrap{margin-bottom:6px}
+    .conf-label-row{display:flex;justify-content:space-between;
+                    font-size:11px;margin-bottom:3px}
+    .conf-track{background:#E0E0E0;border-radius:4px;height:5px}
+    .conf-fill{height:5px;border-radius:4px;transition:width .3s}
+
+    .farm-score-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+    .farm-score-track{flex:1;background:#E0E0E0;border-radius:3px;height:4px}
+    .farm-score-fill{height:4px;border-radius:3px}
+
+    .badge-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+    .alert-pill{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:bold}
+    .alert-pill.danger{background:#FFEBEE;color:#B71C1C}
+    .alert-pill.warn  {background:#FFF3E0;color:#E65100}
+    .alert-pill.good  {background:#E8F5E9;color:#2E7D32}
+    .alert-pill.info  {background:#E3F2FD;color:#1565C0}
+
+    .arima-chip{font-size:11px;background:#E3F2FD;color:#1565C0;
+                border-radius:6px;padding:3px 8px;margin-top:4px;
+                display:inline-block}
+
+    .weather-label-row{font-size:12px;color:#757575;margin-bottom:6px;
+                       display:flex;align-items:center;gap:6px}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌱 GroWise</h1>
+  <p>Smart Agricultural Advisory System — Sarawak, Malaysia</p>
+</div>
+
+<div class="container">
+
+  <div class="user-pill" id="user-pill">
+    👤 Logged in as <span id="user-pill-name"></span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('register')">📝 Register</div>
+    <div class="tab" onclick="showTab('login')">🔐 Login</div>
+    <div class="tab" onclick="showTab('profile')">🌾 Profile</div>
+    <div class="tab" onclick="showTab('view')">📋 My Profiles</div>
+    <div class="tab" onclick="showTab('weather')">🌦️ Weather</div>
+    <div class="tab" onclick="showTab('recommend')">🌱 What to Plant</div>
+    <div class="tab" onclick="showTab('guide')">📖 How to Plant</div>
+    <div class="tab" onclick="showTab('planting')">📅 When to Plant</div>
+  </div>
+
+  <!-- ══ REGISTER ══════════════════════════════════════════════ -->
+  <div class="section active" id="tab-register">
+    <div class="card">
+      <h2>📝 Create Account</h2>
+      <div class="info-box blue">
+        Fill in your details. Token saved automatically after registration.
+      </div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="reg-name" placeholder="e.g. Ali bin Ahmad"/>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="ali@growise.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="minimum 6 characters"/>
+      </div>
+      <div class="form-group">
+        <label>Experience Level</label>
+        <select id="reg-experience">
+          <option value="beginner">🌱 Beginner — First time farmer</option>
+          <option value="intermediate">🌿 Intermediate — Some experience</option>
+          <option value="expert">🌳 Expert — Commercial farmer</option>
+        </select>
+      </div>
+      <button class="btn" onclick="register()" id="btn-register">
+        Create Account →
+      </button>
+      <div class="status-bar" id="reg-status"></div>
+      <div class="token-box" id="reg-token-box">
+        <div class="tlabel">✅ Token saved to browser</div>
+        <div class="tval" id="reg-token-val"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOGIN ════════════════════════════════════════════════ -->
+  <div class="section" id="tab-login">
+    <div class="card">
+      <h2>🔐 Login</h2>
+      <div class="info-box blue">
+        Already registered? Login to get a fresh token.
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="ali@growise.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="your password"/>
+      </div>
+      <button class="btn" onclick="login()" id="btn-login">Login →</button>
+      <div class="status-bar" id="login-status"></div>
+      <div class="token-box" id="login-token-box">
+        <div class="tlabel">✅ Token saved to browser</div>
+        <div class="tval" id="login-token-val"></div>
+      </div>
+      <hr class="divider"/>
+      <button class="btn btn-teal" onclick="getMe()">Get My Info</button>
+      <div id="me-result"></div>
+    </div>
+  </div>
+
+  <!-- ══ CREATE PROFILE ════════════════════════════════════════ -->
+  <div class="section" id="tab-profile">
+    <div class="card">
+      <h2>🌾 Create Farm Profile</h2>
+      <div class="info-box orange" id="profile-auth-note">
+        ⚠️ Please register or login first.
+      </div>
+      <div class="form-group">
+        <label>Region / District</label>
+        <select id="profile-region">
+          <option value="">Loading regions...</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>Land Size</label>
+          <input type="number" id="profile-landsize"
+                 placeholder="e.g. 100" min="1" step="0.1"/>
+        </div>
+        <div class="form-group">
+          <label>Unit</label>
+          <select id="profile-unit">
+            <option value="sqft">sqft</option>
+            <option value="acre">acre</option>
+            <option value="hectare">hectare</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Water Source</label>
+        <select id="profile-water">
+          <option value="rain_fed">🌧️ Rain-fed</option>
+          <option value="irrigation">💧 Irrigation</option>
+          <option value="both">🌧️💧 Both</option>
+          <option value="none">❌ None</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Experience Level</label>
+        <select id="profile-experience">
+          <option value="beginner">🌱 Beginner</option>
+          <option value="intermediate">🌿 Intermediate</option>
+          <option value="expert">🌳 Expert</option>
+        </select>
+      </div>
+      <div class="info-box green">
+        🔍 Soil type auto-detected from SoilGrids API using your coordinates.
+      </div>
+      <button class="btn" onclick="createProfile()" id="btn-profile">
+        Create Profile (Auto-Detect Soil) →
+      </button>
+      <div class="status-bar" id="profile-status"></div>
+      <div id="profile-result"></div>
+    </div>
+  </div>
+
+  <!-- ══ VIEW PROFILES ════════════════════════════════════════ -->
+  <div class="section" id="tab-view">
+    <div class="card">
+      <h2>📋 My Farm Profiles</h2>
+      <div class="info-box blue">
+        View all saved farm profiles with auto-detected soil types.
+      </div>
+      <button class="btn" onclick="loadProfiles()" id="btn-view">
+        Load My Profiles →
+      </button>
+      <div class="status-bar" id="view-status"></div>
+      <div id="view-result"></div>
+    </div>
+  </div>
+
+  <!-- ══ WEATHER CALENDAR ══════════════════════════════════════ -->
+  <div class="section" id="tab-weather">
+    <div class="card">
+      <h2>🌦️ 30-Day Weather Calendar</h2>
+      <div class="info-box blue">
+        Days 1–6 use real Open-Meteo forecast.
+        Days 7–30 use ARIMA model trained on 2 years of Sarawak data.
+        First load may take 30–60 seconds.
+      </div>
+
+      <div class="form-group">
+        <label>Select Farm Profile</label>
+        <select id="weather-profile">
+          <option value="">Loading profiles...</option>
+        </select>
+      </div>
+
+      <button class="btn" onclick="getWeather()" id="btn-weather">
+        Load 30-Day Calendar →
+      </button>
+
+      <div class="status-bar" id="weather-status"></div>
+
+      <!-- Legend -->
+      <div id="weather-legend" style="display:none;margin-top:14px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;
+                    padding:8px 0">
+          <span>🟢 <b>Days 1–6</b> Live forecast</span>
+          <span>🔵 <b>Days 7–14</b> ARIMA predicted</span>
+          <span>⚫ <b>Days 15–30</b> ARIMA estimated</span>
+        </div>
+      </div>
+
+      <!-- Weekly summaries -->
+      <div id="weather-weekly"></div>
+
+      <!-- Day cards -->
+      <div id="weather-calendar"></div>
+    </div>
+  </div>
+
+  <!-- ══ RECOMMEND ═══════════════════════════════════════════════ -->
+<div class="section" id="tab-recommend">
+  <div class="card">
+    <h2>🌱 What to Plant</h2>
+
+    <div class="info-box blue">
+      AI recommends the top 5 crops based on your farm
+      profile, soil type, and current 6-day weather.
+      Powered by Groq AI via OpenRouter.
+    </div>
+
+    <div class="form-group">
+      <label>Select Farm Profile</label>
+      <select id="rec-profile">
+        <option value="">Loading profiles...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Mode</label>
+      <select id="rec-crisis">
+        <option value="false">🌿 Normal Mode</option>
+        <option value="true">🚨 Crisis Mode — Extreme Weather</option>
+      </select>
+    </div>
+
+    <button class="btn" onclick="getRecommendations()"
+            id="btn-recommend">
+      Get AI Recommendations →
+    </button>
+
+    <div class="status-bar" id="rec-status"></div>
+
+    <!-- Weather context card -->
+    <div id="rec-weather"></div>
+
+    <!-- Crop recommendation cards -->
+    <div id="rec-result"></div>
+  </div>
+</div>
+
+<!-- ══ GUIDE ════════════════════════════════════════════════════ -->
+<div class="section" id="tab-guide">
+  <div class="card">
+    <h2>📖 How to Plant</h2>
+
+    <div class="info-box blue">
+      Select a crop from your recommendations to get
+      a complete personalized planting guide.
+      AI adapts the guide to your experience level.
+    </div>
+
+    <div class="form-group">
+      <label>Select Farm Profile</label>
+      <select id="guide-profile" onchange="loadCropsForGuide()">
+        <option value="">Select profile first...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Select Crop</label>
+      <select id="guide-crop">
+        <option value="">Get recommendations first...</option>
+      </select>
+    </div>
+
+    <button class="btn" onclick="getGuide()" id="btn-guide">
+      Generate Planting Guide →
+    </button>
+
+    <div class="status-bar" id="guide-status"></div>
+    <div id="guide-result"></div>
+  </div>
+</div>
+
+<!-- ══ PLANTING (When to Plant) ═══════════════════════════════════════ -->
+<div class="section" id="tab-planting">
+  <div class="card">
+    <h2>📅 When to Plant</h2>
+
+    <div class="info-box blue">
+      Scores each of the 30 days to find the best consecutive planting windows.
+      Days 1–6 use real forecast. Days 7–30 use ARIMA prediction.
+    </div>
+
+    <div class="form-group">
+      <label>Select Farm Profile</label>
+      <select id="plant-profile">
+        <option value="">Loading profiles...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Crop Name</label>
+      <input type="text" id="plant-crop" placeholder="e.g. Kangkung — optional"/>
+    </div>
+
+    <div class="form-group">
+      <label>Already Planted?</label>
+      <select id="plant-planted">
+        <option value="no">No — find planting windows</option>
+        <option value="yes">Yes — skip planting events</option>
+      </select>
+    </div>
+
+    <button class="btn" onclick="getPlantingWindows()" id="btn-planting">
+      Find Best Planting Windows →
+    </button>
+
+    <div class="status-bar" id="plant-status"></div>
+    <div id="plant-windows"></div>
+    <div id="plant-calendar"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+
+  
+const API = 'http://localhost:8000';
+let token       = localStorage.getItem('growise_token') || '';
+let currentUser = JSON.parse(localStorage.getItem('growise_user') || 'null');
+
+// ── Tab navigation ──────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s =>
+    s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t =>
+    t.classList.remove('active'));
+
+  document.getElementById('tab-' + name).classList.add('active');
+
+  const order = ['register','login','profile','view','weather','recommend','guide','planting'];
+  const idx   = order.indexOf(name);
+  if (idx >= 0) {
+    document.querySelectorAll('.tab')[idx].classList.add('active');
+  }
+
+  if (name === 'profile')   loadRegions();
+  if (name === 'weather')   loadProfilesForWeather();
+  if (name === 'recommend') loadProfilesForRecommend();
+  if (name === 'guide')     loadGuideProfiles();
+  if (name === 'planting')  loadProfilesForPlanting();
+  updateAuthNote();
+}
+
+// ── Helpers ─────────────────────────────────────────────────────
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className   = 'status-bar show ' + type;
+}
+
+function clearStatus(id) {
+  const el = document.getElementById(id);
+  el.className   = 'status-bar';
+  el.textContent = '';
+}
+
+function saveToken(t, user) {
+  token       = t;
+  currentUser = user;
+  localStorage.setItem('growise_token', t);
+  localStorage.setItem('growise_user', JSON.stringify(user));
+  updateUserPill();
+}
+
+function updateUserPill() {
+  const pill = document.getElementById('user-pill');
+  const name = document.getElementById('user-pill-name');
+  if (token && currentUser) {
+    pill.classList.add('show');
+    name.textContent = currentUser.name || currentUser.email;
+  } else {
+    pill.classList.remove('show');
+  }
+}
+
+function updateAuthNote() {
+  const note = document.getElementById('profile-auth-note');
+  if (!note) return;
+  if (token) {
+    note.className   = 'info-box green';
+    note.textContent = '✅ Logged in. Fill the form to create your farm profile.';
+  } else {
+    note.className   = 'info-box orange';
+    note.textContent = '⚠️ Please register or login first.';
+  }
+}
+
+function hdrs() {
+  return {
+    'Content-Type':  'application/json',
+    'Authorization': 'Bearer ' + token
+  };
+}
+
+// ── Register ────────────────────────────────────────────────────
+async function register() {
+  const btn  = document.getElementById('btn-register');
+  const name = document.getElementById('reg-name').value.trim();
+  const email= document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-password').value;
+  const exp  = document.getElementById('reg-experience').value;
+
+  clearStatus('reg-status');
+  if (!name || !email || !pass) {
+    setStatus('reg-status','⚠️ Please fill all fields','error'); return;
+  }
+  if (pass.length < 6) {
+    setStatus('reg-status','⚠️ Password min 6 characters','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('reg-status','⏳ Creating account...','loading');
+
+  try {
+    const res  = await fetch(API+'/api/auth/register',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email,password:pass,name,experience_level:exp})
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      saveToken(data.token, data.user);
+      setStatus('reg-status','✅ Account created! Welcome, '+data.user.name+'!','success');
+      document.getElementById('reg-token-box').style.display = 'block';
+      document.getElementById('reg-token-val').textContent =
+        data.token.substring(0,60)+'...';
+      setTimeout(()=>showTab('profile'), 1500);
+    } else {
+      setStatus('reg-status','❌ '+( data.detail||JSON.stringify(data)),'error');
+    }
+  } catch(e) {
+    setStatus('reg-status','❌ Cannot reach server','error');
+  }
+  btn.disabled = false;
+}
+
+// ── Login ────────────────────────────────────────────────────────
+async function login() {
+  const btn   = document.getElementById('btn-login');
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-password').value;
+
+  clearStatus('login-status');
+  if (!email||!pass) {
+    setStatus('login-status','⚠️ Please fill all fields','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('login-status','⏳ Logging in...','loading');
+
+  try {
+    const res  = await fetch(API+'/api/auth/login',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email,password:pass})
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      saveToken(data.token, data.user);
+      setStatus('login-status','✅ Welcome back, '+data.user.name+'!','success');
+      document.getElementById('login-token-box').style.display = 'block';
+      document.getElementById('login-token-val').textContent =
+        data.token.substring(0,60)+'...';
+    } else {
+      setStatus('login-status','❌ Invalid email or password','error');
+    }
+  } catch(e) {
+    setStatus('login-status','❌ Cannot reach server','error');
+  }
+  btn.disabled = false;
+}
+
+// ── Get Me ───────────────────────────────────────────────────────
+async function getMe() {
+  if (!token){ alert('Login first'); return; }
+  try {
+    const res  = await fetch(API+'/api/auth/me',{headers:hdrs()});
+    const data = await res.json();
+    if (data.success) {
+      const u = data.data;
+      document.getElementById('me-result').innerHTML = `
+        <div class="profile-card" style="margin-top:12px">
+          <div class="field">
+            <span class="key">Name</span>
+            <span class="val">${u.name}</span>
+          </div>
+          <div class="field">
+            <span class="key">Email</span>
+            <span class="val">${u.email}</span>
+          </div>
+          <div class="field">
+            <span class="key">Experience</span>
+            <span class="val">
+              <span class="badge green">${u.experience_level}</span>
+            </span>
+          </div>
+          <div class="field">
+            <span class="key">Member Since</span>
+            <span class="val">
+              ${new Date(u.created_at).toLocaleDateString('en-MY')}
+            </span>
+          </div>
+        </div>`;
+    }
+  } catch(e) {
+    document.getElementById('me-result').innerHTML =
+      '<div class="status-bar show error">❌ Failed</div>';
+  }
+}
+
+// ── Load Regions ─────────────────────────────────────────────────
+async function loadRegions() {
+  try {
+    const res  = await fetch(API+'/api/profile/regions');
+    const data = await res.json();
+    const sel  = document.getElementById('profile-region');
+    if (data.success && data.data.length > 0) {
+      sel.innerHTML = '';
+      data.data.forEach(r => {
+        const o = document.createElement('option');
+        o.value       = r.id;
+        o.textContent = r.name+' ('+r.lat+', '+r.lng+')';
+        sel.appendChild(o);
+      });
+    } else {
+      sel.innerHTML = '<option value="">No regions — seed database</option>';
+    }
+  } catch(e) {
+    document.getElementById('profile-region').innerHTML =
+      '<option value="">Cannot load</option>';
+  }
+}
+
+// ── Create Profile ───────────────────────────────────────────────
+async function createProfile() {
+  const btn = document.getElementById('btn-profile');
+  clearStatus('profile-status');
+  document.getElementById('profile-result').innerHTML = '';
+
+  if (!token) {
+    setStatus('profile-status','⚠️ Login first','error'); return;
+  }
+
+  const region_id = document.getElementById('profile-region').value;
+  const land_size = parseFloat(document.getElementById('profile-landsize').value);
+  const unit      = document.getElementById('profile-unit').value;
+  const water     = document.getElementById('profile-water').value;
+  const exp       = document.getElementById('profile-experience').value;
+
+  if (!region_id) {
+    setStatus('profile-status','⚠️ Select a region','error'); return;
+  }
+  if (!land_size || land_size <= 0) {
+    setStatus('profile-status','⚠️ Enter valid land size','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('profile-status','⏳ Creating profile + detecting soil...','loading');
+
+  try {
+    const res  = await fetch(API+'/api/profile/farms',{
+      method:'POST', headers:hdrs(),
+      body: JSON.stringify({
+        region_id, land_size,
+        land_size_unit:   unit,
+        water_source:     water,
+        experience_level: exp,
+        is_default:       true
+      })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const p = data.data;
+      const wl = {
+        rain_fed:'🌧️ Rain-fed', irrigation:'💧 Irrigation',
+        both:'🌧️💧 Both', none:'❌ None'
+      };
+      setStatus('profile-status',
+        '✅ Profile created! Soil auto-detected.','success');
+      document.getElementById('profile-result').innerHTML = `
+        <div class="profile-card">
+          <div class="field">
+            <span class="key">📍 Region</span>
+            <span class="val">${p.region_name}, Sarawak</span>
+          </div>
+          <div class="field">
+            <span class="key">🌐 Coordinates</span>
+            <span class="val">${p.lat}, ${p.lng}</span>
+          </div>
+          <div class="field">
+            <span class="key">📐 Land</span>
+            <span class="val">${p.land_size} ${p.land_size_unit}</span>
+          </div>
+          <div class="field">
+            <span class="key">💧 Water</span>
+            <span class="val">${wl[p.water_source]||p.water_source}</span>
+          </div>
+          <div class="field">
+            <span class="key">👤 Experience</span>
+            <span class="val">
+              <span class="badge green">${p.experience_level}</span>
+            </span>
+          </div>
+          <div class="field">
+            <span class="key">🌱 Soil Type</span>
+            <span class="val">
+              <span class="badge teal">${p.soil_type}</span>
+            </span>
+          </div>
+          <div class="field">
+            <span class="key">⭐ Default</span>
+            <span class="val">${p.is_default?'✅ Yes':'No'}</span>
+          </div>
+        </div>`;
+    } else {
+      setStatus('profile-status',
+        '❌ '+(data.detail||JSON.stringify(data)),'error');
+    }
+  } catch(e) {
+    setStatus('profile-status','❌ Cannot reach server','error');
+  }
+  btn.disabled = false;
+}
+
+// ── Load Profiles ────────────────────────────────────────────────
+async function loadProfiles() {
+  const btn = document.getElementById('btn-view');
+  clearStatus('view-status');
+  document.getElementById('view-result').innerHTML = '';
+
+  if (!token) {
+    setStatus('view-status','⚠️ Login first','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('view-status','⏳ Loading...','loading');
+
+  try {
+    const res  = await fetch(API+'/api/profile/farms',{headers:hdrs()});
+    const data = await res.json();
+
+    if (data.success) {
+      if (data.data.length === 0) {
+        setStatus('view-status','📭 No profiles yet','error');
+      } else {
+        setStatus('view-status',
+          '✅ Found '+data.data.length+' profile(s)','success');
+        const wl = {
+          rain_fed:'🌧️ Rain-fed', irrigation:'💧 Irrigation',
+          both:'🌧️💧 Both', none:'❌ None'
+        };
+        let html = '';
+        data.data.forEach((p,i) => {
+          html += `
+            <div class="profile-card" style="margin-top:12px">
+              <div class="field">
+                <span class="key" style="color:#1B5E20">
+                  Profile ${i+1} ${p.is_default?'⭐':''}
+                </span>
+                <span class="val">
+                  ${p.is_default
+                    ?'<span class="badge green">Default</span>':''}
+                </span>
+              </div>
+              <div class="field">
+                <span class="key">📍 Region</span>
+                <span class="val">${p.region_name}</span>
+              </div>
+              <div class="field">
+                <span class="key">📐 Land</span>
+                <span class="val">${p.land_size} ${p.land_size_unit}</span>
+              </div>
+              <div class="field">
+                <span class="key">💧 Water</span>
+                <span class="val">${wl[p.water_source]||p.water_source}</span>
+              </div>
+              <div class="field">
+                <span class="key">👤 Experience</span>
+                <span class="val">${p.experience_level}</span>
+              </div>
+              <div class="field">
+                <span class="key">🌱 Soil</span>
+                <span class="val">
+                  <span class="badge teal">${p.soil_type}</span>
+                </span>
+              </div>
+            </div>`;
+        });
+        document.getElementById('view-result').innerHTML = html;
+      }
+    } else {
+      setStatus('view-status','❌ Failed','error');
+    }
+  } catch(e) {
+    setStatus('view-status','❌ Cannot reach server','error');
+  }
+  btn.disabled = false;
+}
+
+// ── Load profiles for weather dropdown ──────────────────────────
+async function loadProfilesForWeather() {
+  if (!token) return;
+  try {
+    const res  = await fetch(API+'/api/profile/farms',{headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('weather-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name+' — '+p.land_size+' '+p.land_size_unit;
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    } else {
+      sel.innerHTML = '<option value="">No profiles found</option>';
+    }
+  } catch(e) {
+    document.getElementById('weather-profile').innerHTML =
+      '<option value="">Cannot load</option>';
+  }
+}
+
+// ── Get Weather Calendar ─────────────────────────────────────────
+async function getWeather() {
+  const btn = document.getElementById('btn-weather');
+  clearStatus('weather-status');
+  document.getElementById('weather-weekly').innerHTML   = '';
+  document.getElementById('weather-calendar').innerHTML = '';
+  document.getElementById('weather-legend').style.display = 'none';
+
+  if (!token) {
+    setStatus('weather-status','⚠️ Login first','error'); return;
+  }
+
+  const pid = document.getElementById('weather-profile').value;
+  if (!pid) {
+    setStatus('weather-status','⚠️ Select a profile','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('weather-status',
+    '⏳ Fetching weather + running ARIMA... first load takes 30–60 sec',
+    'loading');
+
+  try {
+    const res  = await fetch(API+'/api/weather?profile_id='+pid,
+      {headers:hdrs()});
+    const data = await res.json();
+
+    if (!data.success) {
+      setStatus('weather-status','❌ '+(data.detail||'Failed'),'error');
+      btn.disabled = false;
+      return;
+    }
+
+    const arr    = data.weather_array    || [];
+    const weekly = data.weekly_summaries || [];
+
+    setStatus('weather-status',
+      '✅ 30-day calendar loaded — '+arr.length+' days','success');
+
+    document.getElementById('weather-legend').style.display = 'block';
+
+    // ── Weekly summaries ──────────────────────────────────────
+    const wkTitles = [
+      '🟢 Week 1 — Live Forecast (Days 1–7)',
+      '🔵 Week 2 — ARIMA Predicted (Days 8–14)',
+      '⚫ Week 3 — ARIMA Estimated (Days 15–21)',
+      '⚫ Week 4 — ARIMA Estimated (Days 22–30)'
+    ];
+    const wkZone = ['accurate','predicted','estimated','estimated'];
+
+    let wkHtml = '<div style="margin-top:14px">';
+    weekly.forEach((w,i) => {
+      const fc =
+        w.flood_risk==='high'   ? '#B71C1C' :
+        w.flood_risk==='medium' ? '#E65100' : '#2E7D32';
+      const gd = w.best_farming_days?.length > 0
+        ? 'Day '+w.best_farming_days.join(', ')
+        : 'None';
+      wkHtml += `
+        <div class="week-header week-${wkZone[i]}">
+          ${wkTitles[i]}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;
+                    margin-bottom:4px">
+          <div class="day-stat-box" style="min-width:70px">
+            <span class="sv">${w.avg_temp??'—'}°C</span>
+            <span class="sk">Avg Temp</span>
+          </div>
+          <div class="day-stat-box" style="min-width:70px">
+            <span class="sv">${w.total_rainfall??0}mm</span>
+            <span class="sk">Rainfall</span>
+          </div>
+          <div class="day-stat-box" style="min-width:70px">
+            <span class="sv">${w.rainy_days??0}</span>
+            <span class="sk">Rainy Days</span>
+          </div>
+          <div class="day-stat-box" style="min-width:70px">
+            <span class="sv" style="color:${fc}">${w.flood_risk}</span>
+            <span class="sk">Flood Risk</span>
+          </div>
+          <div class="day-stat-box" style="min-width:80px">
+            <span class="sv" style="color:#2E7D32;font-size:11px">
+              ${gd}
+            </span>
+            <span class="sk">Good Farm Days</span>
+          </div>
+        </div>`;
+    });
+    wkHtml += '</div>';
+    document.getElementById('weather-weekly').innerHTML = wkHtml;
+
+    // ── Day cards ──────────────────────────────────────────────
+    let html = '<div style="margin-top:16px">';
+    html += `<div style="font-size:13px;font-weight:bold;
+                         color:#1B5E20;margin-bottom:12px">
+               📅 Day-by-Day Forecast
+             </div>`;
+
+    arr.forEach(d => {
+      const dateObj  = new Date(d.date);
+      const dateStr  = dateObj.toLocaleDateString('en-MY',{
+        weekday:'short', day:'2-digit', month:'short'
+      });
+
+      // Colors
+      const confColor =
+        d.confidence >= 70 ? '#2E7D32' :
+        d.confidence >= 50 ? '#1565C0' :
+        d.confidence >= 30 ? '#E65100' : '#9E9E9E';
+
+      const farmColor =
+        d.farming_score >= 75 ? '#2E7D32' :
+        d.farming_score >= 50 ? '#FFA000' : '#E53935';
+
+      const zoneLabel = {
+        accurate:  '✅ Live',
+        predicted: '🔵 ARIMA',
+        estimated: '⚫ Est.'
+      }[d.zone] || d.zone;
+
+      // Extra chips
+// ── Extra chips ──────────────────────────────────────────
+      const humChip = d.humidity !== null
+        ? `<span class="day-extra-chip">💦 <b>${d.humidity}%</b></span>`
+        : `<span class="day-extra-chip na">💦 n/a</span>`;
+
+      const windChip = d.wind_kmh !== null
+        ? `<span class="day-extra-chip">💨 <b>${d.wind_kmh} km/h</b></span>`
+        : '';
+
+      const rainProbChip = d.rain_probability !== null
+        ? `<span class="day-extra-chip">🌧️ <b>${d.rain_probability}%</b> chance</span>`
+        : '';
+
+      const soilNote = d.soil_moisture_note
+        ? ` <span style="font-size:9px;color:#9E9E9E">(${d.soil_moisture_note})</span>`
+        : '';
+      const soilChip = d.soil_moisture !== null
+        ? `<span class="day-extra-chip">🪱 Soil <b>${d.soil_moisture}</b>${soilNote}</span>`
+        : `<span class="day-extra-chip na">🪱 Soil n/a</span>`;
+
+      // Alert badges
+      let badges = '';
+      if (d.flood_risk   === 'high')
+        badges += `<span class="alert-pill danger">🌊 Flood Risk</span>`;
+      if (d.flood_risk   === 'medium')
+        badges += `<span class="alert-pill warn">🌊 Flood Watch</span>`;
+      if (d.drought_risk === 'high')
+        badges += `<span class="alert-pill danger">🌵 Drought</span>`;
+      if (d.weather_code && [95,96,99].includes(Number(d.weather_code)))
+        badges += `<span class="alert-pill danger">⛈️ Thunderstorm</span>`;
+      if (d.farming_score >= 80)
+        badges += `<span class="alert-pill good">✅ Great Farm Day</span>`;
+      else if (d.farming_score >= 65)
+        badges += `<span class="alert-pill good">👍 Good Farm Day</span>`;
+
+      // ARIMA interval
+      const arimaHtml = d.arima_interval
+        ? `<div class="arima-chip">
+             🔮 ARIMA temp range: ${d.arima_interval.lower}° – ${d.arima_interval.upper}°C
+           </div>`
+        : '';
+
+      html += `
+        <div class="day-card ${d.zone}">
+
+          <!-- Top row: day number + date + icon + zone tag -->
+          <div class="day-card-top">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="day-num-badge">#${d.day_number}</span>
+              <div>
+                <div class="day-date-label">${dateStr}</div>
+                <div class="weather-label-row">
+                  <span>${d.weather_icon}</span>
+                  <span>${d.weather_label}</span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="day-zone-tag ${d.zone}">${zoneLabel}</span>
+            </div>
+          </div>
+
+          <!-- Main stats: temp, rain, confidence -->
+          <div class="day-main-stats">
+            <div class="day-stat-box">
+              <span class="sv" style="color:#E65100">
+                ${d.temp_max??'—'}°C
+              </span>
+              <span class="sk">Max Temp</span>
+            </div>
+            <div class="day-stat-box">
+              <span class="sv" style="color:#1565C0">
+                ${d.temp_min??'—'}°C
+              </span>
+              <span class="sk">Min Temp</span>
+            </div>
+            <div class="day-stat-box">
+              <span class="sv" style="color:#1565C0">
+                ${d.rainfall_mm??'—'}mm
+              </span>
+              <span class="sk">Rainfall</span>
+            </div>
+            <div class="day-stat-box">
+              <span class="sv" style="color:${confColor}">
+                ${d.confidence}%
+              </span>
+              <span class="sk">Confidence</span>
+            </div>
+          </div>
+
+          <!-- Confidence bar -->
+          <div class="conf-wrap">
+            <div class="conf-label-row">
+              <span style="color:#757575">Forecast confidence</span>
+              <span style="color:${confColor};font-weight:bold">
+                ${d.confidence_label}
+              </span>
+            </div>
+            <div class="conf-track">
+              <div class="conf-fill"
+                   style="width:${d.confidence}%;
+                          background:${confColor}">
+              </div>
+            </div>
+          </div>
+
+          <!-- Farming score bar -->
+          <div class="farm-score-row">
+            <span style="font-size:11px;color:#757575;min-width:80px">
+              Farm score
+            </span>
+            <div class="farm-score-track">
+              <div class="farm-score-fill"
+                   style="width:${d.farming_score}%;
+                          background:${farmColor}">
+              </div>
+            </div>
+            <span style="font-size:11px;font-weight:bold;
+                         color:${farmColor};min-width:24px">
+              ${d.farming_score}
+            </span>
+          </div>
+
+          <!-- Extra chips row -->
+          <div class="day-extra-row">
+            ${humChip}
+            ${windChip}
+            ${rainProbChip}
+            ${soilChip}
+          </div>
+
+          <!-- Alert badges -->
+          ${badges
+            ? '<div class="badge-row">'+badges+'</div>'
+            : ''}
+
+          <!-- ARIMA interval (predicted/estimated only) -->
+          ${arimaHtml}
+
+        </div>
+      `;
+    });
+
+    html += '</div>';
+    document.getElementById('weather-calendar').innerHTML = html;
+
+  } catch(e) {
+    setStatus('weather-status','❌ Cannot reach server','error');
+    console.error(e);
+  }
+  btn.disabled = false;
+}
+
+// ── Load profiles for recommend dropdown ─────────────────────
+async function loadProfilesForRecommend() {
+  if (!token) return;
+  try {
+    const res  = await fetch(API+'/api/profile/farms',{headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('rec-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name+' — '+p.land_size+' '
+                        +p.land_size_unit+' ('+p.soil_type+')';
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    } else {
+      sel.innerHTML = '<option value="">No profiles found</option>';
+    }
+  } catch(e) {
+    document.getElementById('rec-profile').innerHTML =
+      '<option value="">Cannot load</option>';
+  }
+}
+
+// ── Get AI Recommendations ────────────────────────────────────
+async function getRecommendations() {
+  const btn = document.getElementById('btn-recommend');
+  clearStatus('rec-status');
+  document.getElementById('rec-result').innerHTML  = '';
+  document.getElementById('rec-weather').innerHTML = '';
+
+  if (!token) {
+    setStatus('rec-status','⚠️ Please login first','error');
+    return;
+  }
+
+  const pid         = document.getElementById('rec-profile').value;
+  const crisis_mode = document.getElementById('rec-crisis').value === 'true';
+
+  if (!pid) {
+    setStatus('rec-status','⚠️ Select a farm profile','error');
+    return;
+  }
+
+  btn.disabled = true;
+  setStatus('rec-status',
+    '⏳ Fetching weather + asking AI for recommendations...',
+    'loading');
+
+  try {
+    const res  = await fetch(API+'/api/recommend',{
+      method:  'POST',
+      headers: hdrs(),
+      body:    JSON.stringify({profile_id: pid, crisis_mode})
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      setStatus('rec-status','❌ '+(data.detail||'Failed'),'error');
+      btn.disabled = false;
+      return;
+    }
+
+    const recs = data.recommendations || [];
+    const w    = data.weather_summary  || {};
+
+    // ── Weather context ─────────────────────────────────────────
+    const fc =
+      w.flood_risk === 'high'   ? '#B71C1C' :
+      w.flood_risk === 'medium' ? '#E65100' : '#2E7D32';
+    const dc =
+      w.drought_risk === 'high'   ? '#B71C1C' :
+      w.drought_risk === 'medium' ? '#E65100' : '#2E7D32';
+
+    document.getElementById('rec-weather').innerHTML = `
+      <div class="profile-card" style="margin-top:14px;margin-bottom:4px">
+        <div class="field">
+          <span class="key" style="color:#1B5E20;font-size:14px">
+            🌦️ Weather Context (6-day)
+          </span>
+          <span class="val">
+            <span class="badge blue">${w.current_month}</span>
+          </span>
+        </div>
+        <div class="field">
+          <span class="key">🌡️ Avg Temp</span>
+          <span class="val">${w.avg_temp}°C</span>
+        </div>
+        <div class="field">
+          <span class="key">🌧️ Total Rainfall</span>
+          <span class="val">${w.total_rainfall}mm</span>
+        </div>
+        <div class="field">
+          <span class="key">💦 Avg Humidity</span>
+          <span class="val">${w.avg_humidity}%</span>
+        </div>
+        <div class="field">
+          <span class="key">🌊 Flood Risk</span>
+          <span class="val" style="color:${fc};font-weight:bold">
+            ${w.flood_risk}
+          </span>
+        </div>
+        <div class="field">
+          <span class="key">🌵 Drought Risk</span>
+          <span class="val" style="color:${dc};font-weight:bold">
+            ${w.drought_risk}
+          </span>
+        </div>
+      </div>`;
+
+    if (recs.length === 0) {
+      setStatus('rec-status','⚠️ No recommendations returned','error');
+      btn.disabled = false;
+      return;
+    }
+
+    setStatus('rec-status',
+      `✅ Top ${recs.length} crops recommended for your farm`,
+      'success');
+      // Store for guide tab
+    _lastRecs   = recs;
+    _lastProfId = pid;
+
+    // ── Crisis banner ───────────────────────────────────────────
+    let html = '';
+    if (data.crisis_mode) {
+      html += `
+        <div class="info-box" style="background:#FFEBEE;
+             color:#B71C1C;border-color:#B71C1C;margin-top:12px">
+          🚨 Crisis Mode Active — Only survival crops shown
+        </div>`;
+    }
+
+    // ── Crop cards ──────────────────────────────────────────────
+    const rankClass = r =>
+      r === 1 ? 'rank-1' :
+      r === 2 ? 'rank-2' :
+      r === 3 ? 'rank-3' : 'rank-other';
+
+    const rankEmoji = r =>
+      r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`;
+
+    const confColor = c =>
+      c >= 70 ? '#2E7D32' :
+      c >= 50 ? '#1565C0' :
+      c >= 30 ? '#E65100' : '#9E9E9E';
+
+    const diffColors = {
+      'Very Easy': '#2E7D32',
+      'Easy':      '#00695C',
+      'Medium':    '#1565C0',
+      'Hard':      '#E65100'
+    };
+
+    const suitClass = s =>
+      s === 'Good' ? 'suit' :
+      s === 'Fair' ? 'suit fair' : 'suit poor';
+
+    recs.forEach(r => {
+      const cc  = confColor(r.confidence);
+      const rc  = rankClass(r.rank);
+      const re  = rankEmoji(r.rank);
+      const dc2 = diffColors[r.difficulty] || '#2E7D32';
+
+      html += `
+        <div class="crop-card ${rc}">
+
+          <!-- Rank + Name -->
+          <div class="crop-name-row">
+            <span class="crop-rank-badge">${re}</span>
+            <span class="crop-name">${r.crop_name}</span>
+            <span class="crop-local">${r.local_name || ''}</span>
+          </div>
+
+          <!-- Confidence bar -->
+          <div class="conf-row">
+            <span class="conf-label">Confidence</span>
+            <div class="conf-track">
+              <div class="conf-fill"
+                   style="width:${r.confidence}%;background:${cc}">
+              </div>
+            </div>
+            <span class="conf-pct" style="color:${cc}">
+              ${r.confidence}%
+            </span>
+          </div>
+
+          <!-- Stats row -->
+          <div class="crop-stats">
+            <div class="crop-stat">
+              <span class="csv">${r.growth_duration_days} days</span>
+              <span class="csk">Growth</span>
+            </div>
+            <div class="crop-stat">
+              <span class="csv">
+                ${r.estimated_harvest_date || '—'}
+              </span>
+              <span class="csk">Est. Harvest</span>
+            </div>
+            <div class="crop-stat">
+              <span class="csv">RM ${r.estimated_cost_myr}</span>
+              <span class="csk">Est. Cost</span>
+            </div>
+            <div class="crop-stat">
+              <span class="csv" style="font-size:11px">
+                ${r.expected_yield}
+              </span>
+              <span class="csk">Yield</span>
+            </div>
+          </div>
+
+          <!-- Why recommended -->
+          <div class="crop-why">
+            💡 ${r.why_recommended}
+          </div>
+
+          <!-- Main concern -->
+          <div class="crop-concern">
+            ⚠️ ${r.main_concern}
+          </div>
+
+          <!-- Tags -->
+          <div class="crop-tags">
+            <span class="crop-tag diff"
+                  style="color:${dc2}">
+              ${r.difficulty}
+            </span>
+            <span class="crop-tag ${suitClass(r.weather_suitability)}">
+              🌦️ ${r.weather_suitability}
+            </span>
+            ${r.flood_tolerant
+              ? '<span class="crop-tag flood">🌊 Flood OK</span>'
+              : ''}
+            ${r.drought_tolerant
+              ? '<span class="crop-tag drought">☀️ Drought OK</span>'
+              : ''}
+          </div>
+
+        </div>`;
+    });
+
+    document.getElementById('rec-result').innerHTML = html;
+
+  } catch(e) {
+    setStatus('rec-status','❌ Cannot reach server','error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+// ── Stored recommendations for guide dropdown ─────────────────
+let _lastRecs   = [];
+let _lastProfId = '';
+
+// ── Load profiles for guide dropdown ─────────────────────────
+async function loadGuideProfiles() {
+  if (!token) return;
+  try {
+    const res  = await fetch(API+'/api/profile/farms',{headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('guide-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name+' — '+p.land_size+' '
+                        +p.land_size_unit+' ('+p.soil_type+')';
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+      loadCropsForGuide();
+    } else {
+      sel.innerHTML = '<option value="">No profiles found</option>';
+    }
+  } catch(e) {
+    document.getElementById('guide-profile').innerHTML =
+      '<option value="">Cannot load</option>';
+  }
+}
+
+// ── Load crops from last recommendations ──────────────────────
+function loadCropsForGuide() {
+  const sel = document.getElementById('guide-crop');
+  sel.innerHTML = '';
+
+  if (_lastRecs.length > 0) {
+    _lastRecs.forEach(r => {
+      const o = document.createElement('option');
+      o.value       = JSON.stringify(r);
+      o.textContent = `#${r.rank} ${r.crop_name} — ${r.difficulty} (${r.confidence}% match)`;
+      sel.appendChild(o);
+    });
+  } else {
+    sel.innerHTML = `
+      <option value="">
+        No recommendations yet — go to What to Plant first
+      </option>`;
+  }
+}
+
+// ── Toggle guide section ──────────────────────────────────────
+function toggleSection(id) {
+  const body = document.getElementById(id);
+  const icon = document.getElementById(id+'-icon');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    if (icon) icon.textContent = '▲';
+  } else {
+    body.style.display = 'none';
+    if (icon) icon.textContent = '▼';
+  }
+}
+
+// ── Get Planting Guide ────────────────────────────────────────
+async function getGuide() {
+  const btn = document.getElementById('btn-guide');
+  clearStatus('guide-status');
+  document.getElementById('guide-result').innerHTML = '';
+
+  if (!token) {
+    setStatus('guide-status','⚠️ Login first','error'); return;
+  }
+
+  const pid      = document.getElementById('guide-profile').value;
+  const cropJson = document.getElementById('guide-crop').value;
+
+  if (!pid) {
+    setStatus('guide-status','⚠️ Select a farm profile','error'); return;
+  }
+  if (!cropJson) {
+    setStatus('guide-status',
+      '⚠️ Go to What to Plant tab first to get recommendations','error');
+    return;
+  }
+
+  let crop;
+  try { crop = JSON.parse(cropJson); }
+  catch(e) {
+    setStatus('guide-status','⚠️ Invalid crop selection','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('guide-status',
+    `⏳ Generating planting guide for ${crop.crop_name}...`,
+    'loading');
+
+  try {
+    const res  = await fetch(API+'/api/guide',{
+      method:  'POST',
+      headers: hdrs(),
+      body:    JSON.stringify({
+        profile_id:             pid,
+        crop_name:              crop.crop_name,
+        local_name:             crop.local_name       || '',
+        growth_duration_days:   crop.growth_duration_days || 30,
+        main_concern:           crop.main_concern     || '',
+        estimated_harvest_date: crop.estimated_harvest_date || '',
+        estimated_cost_myr:     crop.estimated_cost_myr || 0,
+        expected_yield:         crop.expected_yield   || '',
+        confidence:             crop.confidence       || 0
+      })
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      setStatus('guide-status',
+        '❌ '+(data.detail||'Failed'),'error');
+      btn.disabled = false;
+      return;
+    }
+
+    const g = data.guide;
+    const cached = data.cached;
+
+    setStatus('guide-status',
+      `✅ Planting guide ready for ${g.crop_name}`,
+      'success');
+
+    // ── Render guide ──────────────────────────────────────────
+    let html = '';
+
+    // Overview
+    html += `
+      <div class="guide-overview">
+        🌱 <b>${g.crop_name}</b>
+        ${g.local_name ? '('+g.local_name+')' : ''}
+        <br/><br/>
+        ${g.overview || ''}
+      </div>
+      ${cached
+        ? '<div class="guide-cached-note">⚡ Served from cache</div>'
+        : ''}`;
+
+    // What You Need
+    if (g.what_you_need?.length > 0) {
+      html += guideSection('needs', '🛒 What You Need', `
+        ${g.what_you_need.map(item => `
+          <div class="guide-item-row">
+            <span class="guide-item-name">${item.item}</span>
+            <span class="guide-item-detail">
+              ${item.quantity}
+              ${item.estimated_cost_myr
+                ? ' · RM '+item.estimated_cost_myr : ''}
+              <br/>
+              <span style="color:#2E7D32;font-size:11px">
+                ${item.where_to_get || ''}
+              </span>
+            </span>
+          </div>`).join('')}
+      `);
+    }
+
+    // Soil Preparation
+    if (g.soil_preparation?.length > 0) {
+      html += guideSection('soil', '🌍 Soil Preparation',
+        g.soil_preparation.map(s => stepCard(
+          s.step, s.title, s.action, s.why,
+          s.days_before_planting
+            ? `${s.days_before_planting} days before planting`
+            : null
+        )).join('')
+      );
+    }
+
+    // Planting Specs
+    if (g.planting_specs) {
+      const ps = g.planting_specs;
+      html += guideSection('specs', '📐 Planting Specifications', `
+        <div class="guide-spec-grid">
+          <div class="guide-spec-box">
+            <span class="gsv">${ps.spacing_cm || '—'} cm</span>
+            <span class="gsk">Plant Spacing</span>
+          </div>
+          <div class="guide-spec-box">
+            <span class="gsv">${ps.depth_cm || '—'} cm</span>
+            <span class="gsk">Planting Depth</span>
+          </div>
+          <div class="guide-spec-box">
+            <span class="gsv" style="font-size:12px">
+              ${ps.best_time_of_day || '—'}
+            </span>
+            <span class="gsk">Best Time</span>
+          </div>
+          <div class="guide-spec-box">
+            <span class="gsv" style="font-size:12px">
+              ${ps.seeds_needed || '—'}
+            </span>
+            <span class="gsk">Seeds Needed</span>
+          </div>
+        </div>
+        ${ps.rows
+          ? `<div style="margin-top:8px;font-size:12px;
+                         color:#757575;text-align:center">
+               Rows: ${ps.rows}
+             </div>`
+          : ''}
+      `);
+    }
+
+    // Planting Steps
+    if (g.planting_steps?.length > 0) {
+      html += guideSection('steps', '👣 Planting Steps',
+        g.planting_steps.map(s =>
+          stepCard(s.step, s.title, s.action, s.why, s.tip)
+        ).join('')
+      );
+    }
+
+    // Care Schedule
+    if (g.care_schedule) {
+      const cs = g.care_schedule;
+      let careHtml = '';
+
+      if (cs.watering) {
+        const w = cs.watering;
+        careHtml += `
+          <div class="guide-care-block">
+            <div class="guide-care-title">💧 Watering</div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">Frequency</span>
+              <span class="guide-care-val">${w.frequency||'—'}</span>
+            </div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">Amount</span>
+              <span class="guide-care-val">${w.amount||'—'}</span>
+            </div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">Best Time</span>
+              <span class="guide-care-val">${w.best_time||'—'}</span>
+            </div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">🌧️ Rainy Day</span>
+              <span class="guide-care-val">${w.rainy_day_tip||'—'}</span>
+            </div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">☀️ Dry Day</span>
+              <span class="guide-care-val">${w.dry_day_tip||'—'}</span>
+            </div>
+          </div>`;
+      }
+
+      if (cs.fertilizing) {
+        const f = cs.fertilizing;
+        careHtml += `
+          <div class="guide-care-block">
+            <div class="guide-care-title">🌿 Fertilizing</div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">Start Day</span>
+              <span class="guide-care-val">Day ${f.start_day||'—'}</span>
+            </div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">Frequency</span>
+              <span class="guide-care-val">${f.frequency||'—'}</span>
+            </div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">Type</span>
+              <span class="guide-care-val">${f.type||'—'}</span>
+            </div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">Amount</span>
+              <span class="guide-care-val">${f.amount||'—'}</span>
+            </div>
+            <div class="guide-care-row">
+              <span class="guide-care-key">Tip</span>
+              <span class="guide-care-val">${f.tip||'—'}</span>
+            </div>
+          </div>`;
+      }
+
+      if (cs.weeding) {
+        careHtml += `
+          <div class="guide-care-block">
+            <div class="guide-care-title">🌾 Weeding</div>
+            <div style="font-size:13px;color:#424242;line-height:1.5">
+              ${cs.weeding}
+            </div>
+          </div>`;
+      }
+
+      html += guideSection('care', '🗓️ Care Schedule', careHtml);
+    }
+
+    // What to Watch
+    if (g.what_to_watch?.length > 0) {
+      html += guideSection('watch', '👁️ What to Watch For', `
+        ${g.what_to_watch.map(item => `
+          <div class="guide-item-row" style="flex-direction:column;gap:4px">
+            <span style="font-weight:bold;color:#B71C1C">
+              ⚠️ ${item.problem}
+            </span>
+            <span style="font-size:12px;color:#757575">
+              Sign: ${item.sign}
+            </span>
+            <span style="font-size:12px;color:#2E7D32">
+              Action: ${item.action}
+            </span>
+          </div>`).join('')}
+      `);
+    }
+
+    // Harvest Signs
+    if (g.harvest_signs?.length > 0) {
+      html += guideSection('harvest', '🌾 Harvest Signs', `
+        <div class="guide-tag-list">
+          ${g.harvest_signs.map(s =>
+            `<div class="guide-tag-item">🌾 ${s}</div>`
+          ).join('')}
+        </div>
+      `);
+    }
+
+    // Expected Yield
+    if (g.expected_yield) {
+      html += guideSection('yield', '📦 Expected Yield', `
+        <div style="font-size:15px;font-weight:bold;
+                    color:#1B5E20;text-align:center;
+                    padding:10px">
+          ${g.expected_yield}
+        </div>
+      `);
+    }
+
+    // Sarawak Tips
+    if (g.sarawak_tips?.length > 0) {
+      html += guideSection('tips', '🇲🇾 Sarawak Tips', `
+        <div class="guide-tag-list">
+          ${g.sarawak_tips.map(t =>
+            `<div class="guide-tag-item">💡 ${t}</div>`
+          ).join('')}
+        </div>
+      `);
+    }
+
+    document.getElementById('guide-result').innerHTML = html;
+
+  } catch(e) {
+    setStatus('guide-status','❌ Cannot reach server','error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+// ── Guide section helper ──────────────────────────────────────
+function guideSection(id, title, bodyHtml) {
+  return `
+    <div class="guide-section">
+      <div class="guide-section-header"
+           onclick="toggleSection('gs-${id}')">
+        ${title}
+        <span id="gs-${id}-icon">▼</span>
+      </div>
+      <div class="guide-section-body" id="gs-${id}">
+        ${bodyHtml}
+      </div>
+    </div>`;
+}
+
+// ── Step card helper ──────────────────────────────────────────
+function stepCard(num, title, action, why, tip) {
+  return `
+    <div class="guide-step">
+      <span class="guide-step-num">${num}</span>
+      <div class="guide-step-content">
+        <div class="guide-step-title">${title || ''}</div>
+        <div class="guide-step-action">${action || ''}</div>
+        ${why
+          ? `<div class="guide-step-why">💡 Why: ${why}</div>`
+          : ''}
+        ${tip
+          ? `<div class="guide-step-tip">🔧 ${tip}</div>`
+          : ''}
+      </div>
+    </div>`;
+}
+
+// ── When to Plant ────────────────────────────────────────────────
+async function loadProfilesForPlanting() {
+  if (!token) return;
+  try {
+    const res  = await fetch(API+'/api/profile/farms', {headers: hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('plant-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name + ' — ' + p.land_size + ' '
+                        + p.land_size_unit + ' (' + p.soil_type + ')';
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    } else {
+      sel.innerHTML = '<option value="">No profiles yet</option>';
+    }
+  } catch(e) {
+    document.getElementById('plant-profile').innerHTML =
+      '<option value="">Failed to load</option>';
+  }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr + 'T12:00:00');
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+  } catch(e) {
+    return dateStr;
+  }
+}
+
+function scoreCellClass(score, blocked) {
+  if (blocked) return 'blocked';
+  if (score >= 80) return 'excellent';
+  if (score >= 65) return 'good';
+  if (score >= 50) return 'acceptable';
+  if (score >= 30) return 'poor';
+  return 'very-poor';
+}
+
+async function getPlantingWindows() {
+  const btn = document.getElementById('btn-planting');
+  btn.disabled = true;
+  clearStatus('plant-status');
+  document.getElementById('plant-windows').innerHTML = '';
+  document.getElementById('plant-calendar').innerHTML = '';
+
+  if (!token) {
+    setStatus('plant-status', '⚠️ Login first', 'error');
+    btn.disabled = false;
+    return;
+  }
+
+  const pid = document.getElementById('plant-profile').value;
+  if (!pid) {
+    setStatus('plant-status', '⚠️ Select a farm profile', 'error');
+    btn.disabled = false;
+    return;
+  }
+
+  const cropName = document.getElementById('plant-crop').value.trim();
+  const plantedVal = document.getElementById('plant-planted').value;
+  const plantedDate = (plantedVal === 'yes')
+    ? new Date().toISOString().slice(0, 10)
+    : null;
+
+  setStatus('plant-status',
+    '⏳ Analyzing 30-day forecast for planting windows...',
+    'loading');
+
+  try {
+    const res = await fetch(API + '/api/when-to-plant', {
+      method: 'POST',
+      headers: hdrs(),
+      body: JSON.stringify({
+        profile_id: pid,
+        crop_name: cropName || '',
+        planted_date: plantedDate,
+        crisis_mode: false
+      })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setStatus('plant-status', '❌ ' + (data.detail || 'Failed'), 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    const windows = data.windows || [];
+    const dailyScores = data.daily_scores || [];
+
+    // Window cards
+    if (data.planted_date) {
+      document.getElementById('plant-windows').innerHTML = `
+        <div class="info-box green" style="margin-top:12px">
+          Crop already planted — planting windows hidden
+        </div>`;
+    } else if (windows.length > 0) {
+      let winHtml = '';
+      windows.forEach((w, i) => {
+        const labelClass = (w.label || 'good').toLowerCase();
+        const badgeColor = labelClass === 'excellent' ? '#FFD700' :
+                          labelClass === 'good' ? '#2E7D32' : '#1565C0';
+        winHtml += `
+          <div class="window-card ${labelClass}">
+            <span class="window-badge" style="background:${badgeColor};color:${labelClass==='excellent'?'#5D4037':'white'}">
+              ${w.label} — ${w.window_score} pts
+            </span>
+            <div style="font-weight:bold;margin-bottom:6px">
+              ${formatDate(w.start_date)} → ${formatDate(w.end_date)}
+            </div>
+            <div class="crop-stats" style="margin-bottom:8px">
+              <div class="crop-stat">
+                <span class="csv">${w.avg_temp || '—'}°C</span>
+                <span class="csk">Avg temp</span>
+              </div>
+              <div class="crop-stat">
+                <span class="csv">${w.total_rainfall || 0} mm</span>
+                <span class="csk">Rainfall</span>
+              </div>
+              <div class="crop-stat">
+                <span class="csv">${w.window_score}</span>
+                <span class="csk">Score</span>
+              </div>
+            </div>
+            <div style="font-size:13px;margin-bottom:4px">
+              🕐 <b>Best time:</b> ${w.best_time}
+            </div>
+            <div style="font-size:12px;color:#757575;margin-bottom:4px">
+              ${w.best_time_reason}
+            </div>
+            ${w.message ? `<div style="font-size:12px;color:#1B5E20">${w.message}</div>` : ''}
+          </div>`;
+      });
+      document.getElementById('plant-windows').innerHTML = winHtml;
+    } else {
+      document.getElementById('plant-windows').innerHTML = `
+        <div class="info-box orange" style="margin-top:12px">
+          No suitable planting windows found in the next 30 days.
+          ${data.message || ''}
+        </div>`;
+    }
+
+    // Score calendar
+    if (dailyScores.length > 0) {
+      let calHtml = `
+        <h3 style="margin-top:20px">📊 30-Day Planting Score</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin-bottom:8px;color:#757575">
+          <span>🟢 Excellent ≥80</span>
+          <span>🟢 Good ≥65</span>
+          <span>🔵 Acceptable ≥50</span>
+          <span>🟠 Poor</span>
+          <span>🔴 Blocked</span>
+        </div>
+        <div class="score-grid">`;
+
+      dailyScores.forEach(ds => {
+        const cls = scoreCellClass(ds.score, ds.blocked);
+        const dateStr = ds.date ? ds.date.slice(5).replace('-','/') : '—';
+        const zoneDot = ds.zone === 'accurate' ? '🟢' : ds.zone === 'predicted' ? '🔵' : '⚫';
+        const scoreText = ds.blocked ? '❌' : ds.score;
+        const tip = ds.blocked
+          ? `Blocked: ${ds.date || ''}`
+          : `Date: ${ds.date || ''} | Score: ${ds.score} | ${ds.zone}`;
+        calHtml += `
+          <div class="score-cell ${cls}" title="${tip}">
+            <div style="font-size:9px;color:#9E9E9E">${ds.day_number || ''}</div>
+            <div style="font-size:8px;color:#757575">${dateStr}</div>
+            <div style="font-weight:bold;font-size:11px">${scoreText}</div>
+            <div>${zoneDot}</div>
+          </div>`;
+      });
+
+      calHtml += '</div>';
+      document.getElementById('plant-calendar').innerHTML = calHtml;
+    }
+
+    setStatus('plant-status',
+      `✅ Found ${windows.length} planting window(s)`,
+      'success');
+
+  } catch(e) {
+    setStatus('plant-status', '❌ Cannot reach server', 'error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+window.onload = () => {
+  updateUserPill();
+  updateAuthNote();
+};
+</script>
+</body>
+</html>
