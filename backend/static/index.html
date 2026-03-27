@@ -500,6 +500,122 @@
 
     .weather-label-row{font-size:12px;color:#757575;margin-bottom:6px;
                        display:flex;align-items:center;gap:6px}
+
+  /* ── Fertilize calendar ── */
+.fert-day {
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-left: 4px solid;
+  font-size: 13px;
+}
+.fert-day.has-event.confirmed {
+  background: #E8F5E9;
+  border-color: #2E7D32;
+}
+.fert-day.has-event.skipped {
+  background: #FFF3E0;
+  border-color: #E65100;
+}
+.fert-day.seedling {
+  background: #F9FBE7;
+  border-color: #AFB42B;
+}
+.fert-day.no-event {
+  background: #FAFAFA;
+  border-color: #E0E0E0;
+}
+.fert-day.maturity {
+  background: #F5F5F5;
+  border-color: #BDBDBD;
+}
+
+.fert-day-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.fert-day-date {
+  font-weight: bold;
+  color: #424242;
+  font-size: 13px;
+}
+.fert-day-stage {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+.stage-seedling    { background:#F9FBE7; color:#827717; }
+.stage-vegetative  { background:#E8F5E9; color:#2E7D32; }
+.stage-flowering   { background:#FCE4EC; color:#880E4F; }
+.stage-fruiting    { background:#FFF3E0; color:#E65100; }
+.stage-maturity    { background:#F5F5F5; color:#757575; }
+.stage-not_planted { background:#FAFAFA; color:#BDBDBD; }
+
+.fert-event-detail {
+  font-size: 12px;
+  color: #424242;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.fert-skip-reason {
+  font-size: 11px;
+  color: #E65100;
+  background: #FFF3E0;
+  border-radius: 4px;
+  padding: 3px 7px;
+  margin-top: 4px;
+  display: inline-block;
+}
+.fert-confirmed-badge {
+  font-size: 11px;
+  color: #2E7D32;
+  background: #E8F5E9;
+  border-radius: 4px;
+  padding: 3px 7px;
+  margin-top: 4px;
+  display: inline-block;
+  font-weight: bold;
+}
+
+.fert-summary-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.fert-summary-box {
+  background: white;
+  border: 1px solid #E0E0E0;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  flex: 1;
+  min-width: 70px;
+}
+.fert-summary-box .fsv {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1B5E20;
+  display: block;
+}
+.fert-summary-box .fsk {
+  font-size: 10px;
+  color: #757575;
+}
+
+.zone-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 3px;
+}
+.zone-dot.accurate  { background: #2E7D32; }
+.zone-dot.predicted { background: #1565C0; }
+.zone-dot.estimated { background: #9E9E9E; }
   </style>
 </head>
 <body>
@@ -524,6 +640,7 @@
     <div class="tab" onclick="showTab('recommend')">🌱 What to Plant</div>
     <div class="tab" onclick="showTab('guide')">📖 How to Plant</div>
     <div class="tab" onclick="showTab('planting')">📅 When to Plant</div>
+    <div class="tab" onclick="showTab('fertilize')">💊 When to Fertilize</div>
   </div>
 
   <!-- ══ REGISTER ══════════════════════════════════════════════ -->
@@ -818,6 +935,53 @@
   </div>
 </div>
 
+<!-- ══ FERTILIZE ════════════════════════════════════════════════ -->
+<div class="section" id="tab-fertilize">
+  <div class="card">
+    <h2>💊 When to Fertilize</h2>
+
+    <div class="info-box blue">
+      Enter your planted date to get a 30-day fertilizing
+      schedule. Events are skipped on days with heavy rain,
+      wet soil, or dry soil. Scaled to your land size.
+    </div>
+
+    <div class="form-group">
+      <label>Select Farm Profile</label>
+      <select id="fert-profile">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Crop Name</label>
+      <input type="text" id="fert-crop"
+             placeholder="e.g. Kangkung"/>
+    </div>
+
+    <div class="form-group">
+      <label>Planted Date</label>
+      <input type="date" id="fert-planted"/>
+    </div>
+
+    <button class="btn" onclick="getFertilizeSchedule()"
+            id="btn-fertilize">
+      Generate Fertilize Schedule →
+    </button>
+
+    <div class="status-bar" id="fert-status"></div>
+
+    <!-- Summary stats -->
+    <div id="fert-summary"></div>
+
+    <!-- Next event highlight -->
+    <div id="fert-next"></div>
+
+    <!-- 30-day calendar -->
+    <div id="fert-calendar"></div>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -836,7 +1000,7 @@ function showTab(name) {
 
   document.getElementById('tab-' + name).classList.add('active');
 
-  const order = ['register','login','profile','view','weather','recommend','guide','planting'];
+  const order = ['register','login','profile','view','weather','recommend','guide','planting','fertilize'];
   const idx   = order.indexOf(name);
   if (idx >= 0) {
     document.querySelectorAll('.tab')[idx].classList.add('active');
@@ -847,6 +1011,7 @@ function showTab(name) {
   if (name === 'recommend') loadProfilesForRecommend();
   if (name === 'guide')     loadGuideProfiles();
   if (name === 'planting')  loadProfilesForPlanting();
+  if (name === 'fertilize') loadProfilesForFertilize();
   updateAuthNote();
 }
 
@@ -2341,6 +2506,286 @@ async function getPlantingWindows() {
   }
 
   btn.disabled = false;
+}
+
+// ── Load profiles for fertilize dropdown ─────────────────────
+async function loadProfilesForFertilize() {
+  if (!token) return;
+  try {
+    const res  = await fetch(API+'/api/profile/farms',
+      {headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('fert-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name+' — '+p.land_size
+                        +' '+p.land_size_unit
+                        +' ('+p.soil_type+')';
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    } else {
+      sel.innerHTML =
+        '<option value="">No profiles found</option>';
+    }
+  } catch(e) {
+    document.getElementById('fert-profile').innerHTML =
+      '<option value="">Cannot load</option>';
+  }
+
+  // Auto-fill today as default planted date
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fert-planted').value = today;
+}
+
+// ── Get Fertilize Schedule ────────────────────────────────────
+async function getFertilizeSchedule() {
+  const btn = document.getElementById('btn-fertilize');
+  clearStatus('fert-status');
+  document.getElementById('fert-summary').innerHTML  = '';
+  document.getElementById('fert-next').innerHTML     = '';
+  document.getElementById('fert-calendar').innerHTML = '';
+
+  if (!token) {
+    setStatus('fert-status','⚠️ Login first','error'); return;
+  }
+
+  const pid     = document.getElementById('fert-profile').value;
+  const crop    = document.getElementById('fert-crop').value.trim();
+  const planted = document.getElementById('fert-planted').value;
+
+  if (!pid) {
+    setStatus('fert-status','⚠️ Select a profile','error'); return;
+  }
+  if (!crop) {
+    setStatus('fert-status','⚠️ Enter a crop name','error'); return;
+  }
+  if (!planted) {
+    setStatus('fert-status','⚠️ Enter planted date','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('fert-status',
+    '⏳ Fetching weather + calculating fertilize schedule...',
+    'loading');
+
+  try {
+    const res  = await fetch(API+'/api/when-to-fertilize',{
+      method:  'POST',
+      headers: hdrs(),
+      body:    JSON.stringify({
+        profile_id:   pid,
+        crop_name:    crop,
+        planted_date: planted,
+        crisis_mode:  false
+      })
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      setStatus('fert-status',
+        '❌ '+(data.detail||'Failed'),'error');
+      btn.disabled = false;
+      return;
+    }
+
+    // Crisis mode check
+    if (data.crisis_mode) {
+      setStatus('fert-status',
+        '🚨 Crisis Mode — All fertilizing suspended','error');
+      document.getElementById('fert-next').innerHTML = `
+        <div class="info-box"
+             style="background:#FFEBEE;color:#B71C1C;
+                    border-color:#B71C1C;margin-top:12px">
+          🚨 ${data.crisis_note}
+        </div>`;
+      btn.disabled = false;
+      return;
+    }
+
+    const summary = data.summary || {};
+    const events  = data.events  || [];
+    const daily   = data.daily   || [];
+
+    setStatus('fert-status',
+      `✅ Schedule ready — ${summary.confirmed_days} fertilize days confirmed`,
+      'success');
+
+    // ── Summary cards ─────────────────────────────────────────
+    document.getElementById('fert-summary').innerHTML = `
+      <div class="fert-summary-grid" style="margin-top:14px">
+        <div class="fert-summary-box">
+          <span class="fsv">${summary.total_fertilize_days||0}</span>
+          <span class="fsk">Total Events</span>
+        </div>
+        <div class="fert-summary-box">
+          <span class="fsv" style="color:#2E7D32">
+            ${summary.confirmed_days||0}
+          </span>
+          <span class="fsk">Confirmed</span>
+        </div>
+        <div class="fert-summary-box">
+          <span class="fsv" style="color:#E65100">
+            ${summary.skipped_days||0}
+          </span>
+          <span class="fsk">Skipped</span>
+        </div>
+        <div class="fert-summary-box">
+          <span class="fsv">${summary.estimated_plants||0}</span>
+          <span class="fsk">Plants Est.</span>
+        </div>
+        <div class="fert-summary-box">
+          <span class="fsv">${summary.land_sqm||0}m²</span>
+          <span class="fsk">Land Area</span>
+        </div>
+      </div>`;
+
+    // ── Next event highlight ───────────────────────────────────
+    if (summary.next_fertilize_date) {
+      document.getElementById('fert-next').innerHTML = `
+        <div class="info-box green" style="margin-bottom:14px">
+          💊 Next fertilize: <b>${formatFertDate(summary.next_fertilize_date)}</b>
+          — ${summary.next_fertilizer_type || ''}
+        </div>`;
+    } else {
+      document.getElementById('fert-next').innerHTML = `
+        <div class="info-box blue" style="margin-bottom:14px">
+          No upcoming fertilize events in the next 30 days.
+        </div>`;
+    }
+
+    // ── 30-day calendar ────────────────────────────────────────
+    let html = `
+      <div style="font-size:13px;font-weight:bold;
+                  color:#1B5E20;margin-bottom:10px">
+        📅 30-Day Fertilize Calendar
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;
+                  font-size:11px;margin-bottom:12px">
+        <span>💊 Confirmed</span>
+        <span style="color:#E65100">⏭️ Skipped</span>
+        <span style="color:#827717">🌱 Seedling</span>
+        <span style="color:#757575">— No event</span>
+      </div>`;
+
+    daily.forEach(d => {
+      const dateObj = new Date(d.date);
+      const dateStr = dateObj.toLocaleDateString('en-MY',{
+        weekday:'short', day:'2-digit', month:'short'
+      });
+
+      const zoneDot = `<span class="zone-dot ${d.zone}"></span>`;
+
+      const stageClass = {
+        seedling:    'stage-seedling',
+        vegetative:  'stage-vegetative',
+        flowering:   'stage-flowering',
+        fruiting:    'stage-fruiting',
+        maturity:    'stage-maturity',
+        not_planted: 'stage-not_planted'
+      }[d.growth_stage] || 'stage-not_planted';
+
+      const stageEmoji = {
+        seedling:   '🌱',
+        vegetative: '🌿',
+        flowering:  '🌸',
+        fruiting:   '🍅',
+        maturity:   '🌾',
+        not_planted:'—'
+      }[d.growth_stage] || '—';
+
+      if (d.has_event && d.event) {
+        const ev     = d.event;
+        const conf   = ev.should_fertilize ? 'confirmed' : 'skipped';
+        const confColor = ev.should_fertilize ? '#2E7D32' : '#E65100';
+        const confIcon  = ev.should_fertilize ? '💊' : '⏭️';
+
+        html += `
+          <div class="fert-day has-event ${conf}">
+            <div class="fert-day-top">
+              <span class="fert-day-date">
+                ${zoneDot}${confIcon} ${dateStr}
+                <span style="font-size:11px;color:#757575;
+                             margin-left:4px">
+                  Day ${d.day_number}
+                  (${d.days_since_planting}d since planted)
+                </span>
+              </span>
+              <span class="fert-day-stage ${stageClass}">
+                ${stageEmoji} ${d.growth_stage}
+              </span>
+            </div>
+
+            ${ev.should_fertilize
+              ? `<div class="fert-confirmed-badge">
+                   ✅ Apply ${ev.fertilizer_type}
+                 </div>
+                 <div class="fert-event-detail">
+                   Amount: ${ev.amount}<br/>
+                   Time: ${ev.best_time}<br/>
+                   Confidence: ${ev.confidence}% (${ev.confidence_label})
+                 </div>`
+              : `<div class="fert-skip-reason">
+                   ⏭️ Skipped — ${ev.skip_reason}
+                 </div>
+                 <div class="fert-event-detail"
+                      style="color:#757575">
+                   Would apply: ${ev.fertilizer_type}
+                   (${ev.amount})
+                 </div>`
+            }
+          </div>`;
+
+      } else {
+        // No fertilize event this day
+        const isSpecial = ['seedling','maturity','not_planted']
+          .includes(d.growth_stage);
+
+        const dayClass = isSpecial ? d.growth_stage : 'no-event';
+        const note     = d.skip_reason || '';
+
+        html += `
+          <div class="fert-day ${dayClass}">
+            <div class="fert-day-top">
+              <span class="fert-day-date"
+                    style="color:#9E9E9E">
+                ${zoneDot}${dateStr}
+                <span style="font-size:11px;margin-left:4px">
+                  Day ${d.day_number}
+                </span>
+              </span>
+              <span class="fert-day-stage ${stageClass}">
+                ${stageEmoji} ${d.growth_stage}
+              </span>
+            </div>
+            ${note
+              ? `<div style="font-size:11px;color:#BDBDBD">
+                   ${note}
+                 </div>`
+              : ''}
+          </div>`;
+      }
+    });
+
+    document.getElementById('fert-calendar').innerHTML = html;
+
+  } catch(e) {
+    setStatus('fert-status','❌ Cannot reach server','error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+// ── Format date helper ────────────────────────────────────────
+function formatFertDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-MY',{
+    weekday:'short', day:'2-digit', month:'short', year:'numeric'
+  });
 }
 
 // ── Init ─────────────────────────────────────────────────────────
