@@ -4,8 +4,27 @@ from typing import Optional
 from app.services.supabase_client import supabase
 from app.services.weather_service import get_weather
 from app.services.fertilize_service import get_fertilize_events
+import numpy as np
 
 router = APIRouter(prefix="/api", tags=["Fertilize"])
+
+
+def convert_numpy_types(obj):
+    """Convert numpy types to regular Python types for JSON serialization."""
+    if isinstance(obj, dict):
+        return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    else:
+        return obj
 
 
 def get_user(authorization: str) -> str:
@@ -75,6 +94,9 @@ async def when_to_fertilize(
             status_code=400,
             detail=result["error"]
         )
+
+    # Convert numpy types to regular Python types
+    result = convert_numpy_types(result)
 
     return {
         "success":      True,

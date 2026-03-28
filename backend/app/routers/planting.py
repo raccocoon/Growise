@@ -4,6 +4,26 @@ from typing import Optional
 from app.services.supabase_client import supabase
 from app.services.weather_service import get_weather
 from app.services.planting_service import get_planting_windows
+import numpy as np
+
+
+def convert_numpy_types(obj):
+    """Convert numpy types to regular Python types for JSON serialization."""
+    if isinstance(obj, dict):
+        return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    else:
+        return obj
+
 
 router = APIRouter(prefix="/api", tags=["Planting"])
 

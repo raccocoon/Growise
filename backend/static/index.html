@@ -617,6 +617,145 @@
 .zone-dot.predicted { background: #1565C0; }
 .zone-dot.estimated { background: #9E9E9E; }
 
+/* ── Pesticide calendar ── */
+.pest-day {
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-left: 4px solid;
+  font-size: 13px;
+}
+.pest-day.spray {
+  background: #E8F5E9;
+  border-color: #2E7D32;
+}
+.pest-day.delay {
+  background: #FFF3E0;
+  border-color: #E65100;
+}
+.pest-day.no_spray {
+  background: #FAFAFA;
+  border-color: #E0E0E0;
+}
+.pest-day.too_early {
+  background: #F9FBE7;
+  border-color: #AFB42B;
+}
+.risk-high {
+  background: #FFEBEE;
+  color: #B71C1C;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: bold;
+  display: inline-block;
+  margin-right: 4px;
+}
+.risk-medium {
+  background: #FFF3E0;
+  color: #E65100;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: bold;
+  display: inline-block;
+  margin-right: 4px;
+}
+.risk-low {
+  background: #F5F5F5;
+  color: #9E9E9E;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: bold;
+  display: inline-block;
+  margin-right: 4px;
+}
+.pest-summary-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.pest-summary-box {
+  background: white;
+  border: 1px solid #E0E0E0;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  flex: 1;
+  min-width: 70px;
+}
+.pest-summary-box .psv {
+  font-size: 18px;
+  font-weight: bold;
+  display: block;
+}
+.pest-summary-box .psk {
+  font-size: 10px;
+  color: #757575;
+}
+.pest-stat-spray .psv { color: #2E7D32; }
+.pest-stat-delay .psv { color: #E65100; }
+.pest-stat-cooldown .psv { color: #6A1B9A; }
+.pest-stat-none .psv { color: #757575; }
+.pest-stat-risk .psv { font-size: 14px; }
+.pest-badge-spray {
+  display: inline-block;
+  background: #2E7D32;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+.pest-badge-delay {
+  display: inline-block;
+  background: #E65100;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+.pest-badge-early {
+  display: inline-block;
+  background: #AFB42B;
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+.pest-fail-pill {
+  display: inline-block;
+  background: #FFE0B2;
+  color: #E65100;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin: 2px 4px 2px 0;
+}
+.pest-confidence-bar {
+  height: 6px;
+  background: #E0E0E0;
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.pest-confidence-fill {
+  height: 100%;
+  background: #2E7D32;
+  border-radius: 3px;
+}
+.pest-compact {
+  font-size: 12px;
+  color: #757575;
+}
+
 /* ── Modal ── */
 .modal-overlay {
   position: fixed;
@@ -706,6 +845,7 @@
     <div class="tab" onclick="showTab('guide')">📖 How to Plant</div>
     <div class="tab" onclick="showTab('planting')">📅 When to Plant</div>
     <div class="tab" onclick="showTab('fertilize')">💊 When to Fertilize</div>
+    <div class="tab" onclick="showTab('pesticide')">🧪 Pesticide</div>
   </div>
 
   <!-- ══ REGISTER ══════════════════════════════════════════════ -->
@@ -1055,6 +1195,55 @@
   </div>
 </div>
 
+<!-- ══ PESTICIDE ════════════════════════════════════════════════ -->
+<div class="section" id="tab-pesticide">
+  <div class="card">
+    <h2>🧪 When to Pesticide</h2>
+    <div class="info-box blue">
+      Evaluates daily fungal, mite, and insect risk based on humidity,
+      temperature, and rainfall. Only recommends spraying when risk is
+      detected and conditions are safe. Product advice follows your
+      farming method.
+    </div>
+    <div class="form-group">
+      <label>Select Farm Profile</label>
+      <select id="pest-profile">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Load Active Crop</label>
+      <select id="pest-active-crop" onchange="fillPestFromCrop()">
+        <option value="">— Select from My Crops —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Crop Name</label>
+      <input type="text" id="pest-crop" placeholder="e.g. Kangkung"/>
+    </div>
+    <div class="form-group">
+      <label>Planted Date</label>
+      <input type="date" id="pest-planted"/>
+    </div>
+    <div class="form-group">
+      <label>Farming Method</label>
+      <select id="pest-method">
+        <option value="conventional" selected>🌿 Conventional</option>
+        <option value="organic">🍃 Organic — Neem and Natural</option>
+      </select>
+    </div>
+    <button class="btn" onclick="getPesticideSchedule()"
+            id="btn-pesticide">
+      Evaluate Pesticide Risk →
+    </button>
+    <div class="status-bar" id="pest-status"></div>
+    <div id="pest-summary"></div>
+    <div id="pest-next"></div>
+    <div id="pest-legend"></div>
+    <div id="pest-calendar"></div>
+  </div>
+</div>
+
 <!-- ══ MY CROPS ══════════════════════════════════════════════ -->
 <div class="section" id="tab-mycrops">
   <div class="card">
@@ -1134,7 +1323,7 @@ function showTab(name) {
 
   const order = [
   'register','login','profile','view','mycrops',
-  'weather','recommend','guide','planting','fertilize'
+  'weather','recommend','guide','planting','fertilize','pesticide'
 ];
   const idx   = order.indexOf(name);
   if (idx >= 0) {
@@ -1147,6 +1336,7 @@ function showTab(name) {
   if (name === 'guide')     loadGuideProfiles();
   if (name === 'planting')  loadProfilesForPlanting();
   if (name === 'fertilize') loadProfilesForFertilize();
+  if (name === 'pesticide') loadProfilesForPesticide();
   if (name === 'mycrops') loadMyCrops();
   updateAuthNote();
 }
@@ -2584,6 +2774,19 @@ function formatDate(dateStr) {
   }
 }
 
+function formatPestDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr + 'T12:00:00');
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug',
+      'Sep','Oct','Nov','Dec'];
+    return days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
+  } catch (e) {
+    return dateStr;
+  }
+}
+
 function escapeHtml(s) {
   if (s == null) return '';
   return String(s)
@@ -2789,6 +2992,381 @@ async function getFertilizeSchedule() {
       'success');
   } catch (e) {
     setStatus('fert-status', '❌ Cannot reach server', 'error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+function pestRiskClass(level) {
+  if (level === 'HIGH') return 'risk-high';
+  if (level === 'MEDIUM') return 'risk-medium';
+  return 'risk-low';
+}
+
+async function loadProfilesForPesticide() {
+  if (!token) return;
+
+  try {
+    const res = await fetch(API + '/api/profile/farms', {headers: hdrs()});
+    const data = await res.json();
+    const sel = document.getElementById('pest-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = p.region_name + ' — ' + p.land_size
+          + ' ' + p.land_size_unit + ' (' + p.soil_type + ')';
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    } else {
+      sel.innerHTML = '<option value="">No profiles found</option>';
+    }
+  } catch (e) {
+    document.getElementById('pest-profile').innerHTML =
+      '<option value="">Cannot load</option>';
+  }
+
+  await loadActiveCropsForPesticide();
+
+  if (_activeCropName) {
+    document.getElementById('pest-crop').value = _activeCropName;
+  }
+  if (_activePlantedDate) {
+    document.getElementById('pest-planted').value = _activePlantedDate;
+  }
+  if (!document.getElementById('pest-planted').value) {
+    document.getElementById('pest-planted').value =
+      new Date().toISOString().split('T')[0];
+  }
+}
+
+async function loadActiveCropsForPesticide() {
+  try {
+    const res = await fetch(API + '/api/planting-logs/active',
+      {headers: hdrs()});
+    const data = await res.json();
+    const sel = document.getElementById('pest-active-crop');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select from My Crops —</option>';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(log => {
+        const o = document.createElement('option');
+        o.value = JSON.stringify({
+          crop_name: log.crop_name,
+          planted_date: log.planted_date
+        });
+        o.textContent = log.crop_name + ' — planted ' + log.planted_date
+          + ' (' + log.days_since_planted + 'd ago)';
+        sel.appendChild(o);
+      });
+    }
+  } catch (e) {
+    console.error('Cannot load active crops for pesticide', e);
+  }
+}
+
+function fillPestFromCrop() {
+  const sel = document.getElementById('pest-active-crop');
+  if (!sel || !sel.value) return;
+  try {
+    const data = JSON.parse(sel.value);
+    document.getElementById('pest-crop').value = data.crop_name;
+    document.getElementById('pest-planted').value = data.planted_date;
+  } catch (e) {
+    console.error('Parse error', e);
+  }
+}
+
+function pestZoneDotClass(zone) {
+  if (zone === 'accurate') return 'accurate';
+  if (zone === 'predicted') return 'predicted';
+  return 'estimated';
+}
+
+async function getPesticideSchedule() {
+  const btn = document.getElementById('btn-pesticide');
+  clearStatus('pest-status');
+  document.getElementById('pest-summary').innerHTML = '';
+  document.getElementById('pest-next').innerHTML = '';
+  document.getElementById('pest-legend').innerHTML = '';
+  document.getElementById('pest-calendar').innerHTML = '';
+
+  if (!token) {
+    setStatus('pest-status', '⚠️ Login first', 'error');
+    return;
+  }
+
+  const pid = document.getElementById('pest-profile').value;
+  if (!pid) {
+    setStatus('pest-status', '⚠️ Select a farm profile', 'error');
+    return;
+  }
+
+  const cropName = document.getElementById('pest-crop').value.trim();
+  if (!cropName) {
+    setStatus('pest-status', '⚠️ Enter a crop name', 'error');
+    return;
+  }
+
+  const planted = document.getElementById('pest-planted').value;
+  if (!planted) {
+    setStatus('pest-status', '⚠️ Enter planted date', 'error');
+    return;
+  }
+
+  const farmingMethod = document.getElementById('pest-method').value
+    || 'conventional';
+
+  btn.disabled = true;
+  setStatus('pest-status',
+    '⏳ Evaluating pest risks from 30-day forecast...',
+    'loading');
+
+  try {
+    const res = await fetch(API + '/api/when-to-pesticide', {
+      method: 'POST',
+      headers: hdrs(),
+      body: JSON.stringify({
+        profile_id: pid,
+        crop_name: cropName,
+        planted_date: planted,
+        farming_method: farmingMethod
+      })
+    });
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      setStatus('pest-status',
+        '❌ Invalid response (HTTP ' + res.status + ')',
+        'error');
+      btn.disabled = false;
+      return;
+    }
+
+    if (!res.ok || !data.success) {
+      let detail = data && (data.detail ?? data.message);
+      if (detail != null && typeof detail !== 'string') {
+        try { detail = JSON.stringify(detail); }
+        catch (e2) { detail = String(detail); }
+      }
+      if (!detail) detail = 'HTTP ' + res.status;
+      setStatus('pest-status', '❌ ' + detail, 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    const summary = data.summary || {};
+    const daily = data.daily || [];
+
+    const dl = summary.dominant_risk_level;
+    const domRiskStyle = dl === 'HIGH' ? '#B71C1C'
+      : dl === 'MEDIUM' ? '#E65100' : '#757575';
+    const fmLabel = summary.farming_method === 'organic'
+      ? '🍃 Organic'
+      : '🌿 Conventional';
+
+    document.getElementById('pest-summary').innerHTML = `
+      <h3 style="margin-top:16px">📋 Summary</h3>
+      <div class="pest-summary-grid">
+        <div class="pest-summary-box pest-stat-spray">
+          <span class="psv">${summary.total_spray_days ?? 0}</span>
+          <span class="psk">Total spray days</span>
+        </div>
+        <div class="pest-summary-box pest-stat-delay">
+          <span class="psv">${summary.delay_days ?? 0}</span>
+          <span class="psk">Delay days</span>
+        </div>
+        <div class="pest-summary-box pest-stat-cooldown">
+          <span class="psv">${summary.cooldown_skip_days ?? 0}</span>
+          <span class="psk">Cooldown skips</span>
+        </div>
+        <div class="pest-summary-box pest-stat-none">
+          <span class="psv">${summary.no_spray_days ?? 0}</span>
+          <span class="psk">No spray (low risk)</span>
+        </div>
+        <div class="pest-summary-box pest-stat-risk">
+          <span class="psv" style="color:${domRiskStyle};font-size:13px">
+            ${escapeHtml(summary.dominant_risk_type || '—')}
+            ${dl ? ' (' + escapeHtml(dl) + ')' : ''}
+          </span>
+          <span class="psk">Dominant risk</span>
+        </div>
+        <div class="pest-summary-box">
+          <span class="psv" style="font-size:14px;color:#1B5E20">
+            ${fmLabel}
+          </span>
+          <span class="psk">Farming method</span>
+        </div>
+      </div>`;
+
+    // Monthly situation summary with colors
+    const sitColors = {
+      spray_available: {bg:'#E8F5E9', color:'#2E7D32', icon:'✅'},
+      no_window:       {bg:'#FFF3E0', color:'#E65100', icon:'⏳'},
+      too_early:       {bg:'#F9FBE7', color:'#827717', icon:'🌱'},
+      no_risk:         {bg:'#E3F2FD', color:'#1565C0', icon:'ℹ️'}
+    };
+
+    const sit      = summary.monthly_situation || 'no_risk';
+    const sitStyle = sitColors[sit];
+
+    document.getElementById('pest-next').innerHTML = `
+      <div style="background:${sitStyle.bg};
+                  color:${sitStyle.color};
+                  border-left:4px solid ${sitStyle.color};
+                  border-radius:8px;padding:12px 14px;
+                  margin-bottom:12px;font-size:13px">
+        ${sitStyle.icon} <b>${summary.monthly_message}</b>
+      </div>
+      ${summary.what_to_watch ? `
+      <div style="background:#F5F5F5;border-radius:8px;
+                  padding:10px 14px;margin-bottom:12px;
+                  font-size:12px;color:#616161">
+        <b>👁️ What to watch for:</b><br/>
+        ${summary.what_to_watch}
+      </div>` : ''}
+    `;
+
+    document.getElementById('pest-legend').innerHTML =
+      '<div class="info-box" style="margin-top:12px;background:#F5F5F5">' +
+      '<div style="font-weight:bold;margin-bottom:8px">Risk legend</div>' +
+      '<div style="font-size:12px;line-height:1.6;margin-bottom:4px">' +
+      '🍄 Fungal — high humidity + high rain probability</div>' +
+      '<div style="font-size:12px;line-height:1.6;margin-bottom:4px">' +
+      '🕷️ Mite — hot + dry conditions</div>' +
+      '<div style="font-size:12px;line-height:1.6">' +
+      '🐛 Insect — warm + low rain probability</div></div>';
+
+    let calHtml = '<h3 style="margin-top:20px">' +
+      '📅 30-Day Pesticide Calendar</h3>';
+
+    daily.forEach(d => {
+      const st = d.status;
+      const zc = pestZoneDotClass(d.zone);
+      const conf = typeof d.confidence === 'number' ? d.confidence : 0;
+
+      if (st === 'too_early') {
+        calHtml += '<div class="pest-day too_early">' +
+          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">' +
+          '<span class="fert-day-date">' + formatPestDate(d.date) +
+          ' <span style="font-weight:normal;font-size:11px;color:#757575">' +
+          '(day ' + d.day_number + ')</span></span>' +
+          '<span class="pest-badge-early">🌱 Seedling</span></div>' +
+          '<div class="pest-compact" style="margin-top:4px">' +
+          escapeHtml(d.message || d.reason || '') + '</div></div>';
+        return;
+      }
+
+      if (st === 'no_spray') {
+        calHtml += '<div class="pest-day no_spray">' +
+          '<div class="fert-day-date">' + formatPestDate(d.date) +
+          ' <span style="font-weight:normal;font-size:11px;color:#757575">' +
+          '(day ' + d.day_number + ')</span>' +
+          ' <span class="risk-low" style="margin-left:6px">' +
+          '❌ All risks LOW</span></div></div>';
+        return;
+      }
+
+      const fr = d.fungal_risk;
+      const mr = d.mite_risk;
+      const ir = d.insect_risk;
+      const dom = d.dominant_type || '';
+
+      let badges = '<span class="' + pestRiskClass(fr) + '">🍄 ' + fr +
+        '</span><span class="' + pestRiskClass(mr) + '">🕷️ ' + mr +
+        '</span><span class="' + pestRiskClass(ir) + '">🐛 ' + ir +
+        '</span>';
+      const domNote = ' <span style="font-size:11px;color:#424242">(' +
+        'Dominant: <b>' + escapeHtml(dom) + '</b>)</span>';
+
+      if (st === 'spray') {
+        const ws = d.weather_snapshot || {};
+        calHtml += '<div class="pest-day spray">' +
+          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">' +
+          '<span class="fert-day-date">' + formatPestDate(d.date) +
+          ' <span style="font-weight:normal;font-size:11px;color:#757575">' +
+          '(day ' + d.day_number + ')</span></span>' +
+          '<span class="zone-dot ' + zc + '"></span>' +
+          '<span class="pest-badge-spray">🧪 SPRAY</span></div>' +
+          '<div style="margin-top:6px">' + badges + domNote + '</div>' +
+          '<div style="font-size:12px;margin-top:6px;color:#1B5E20">' +
+          '<b>' + escapeHtml(d.product_advice || '') + '</b></div>' +
+          '<div style="font-size:11px;margin-top:4px">🕐 ' +
+          escapeHtml(d.best_spray_time || '') + '</div>' +
+          '<div style="font-size:11px;color:#616161;margin-top:6px">' +
+          'Humidity ' + (ws.humidity != null ? ws.humidity : '—') + '% · ' +
+          'Temp ' + (ws.temp_max != null ? ws.temp_max : '—') + '°C · ' +
+          'Wind ' + (ws.wind_kmh != null ? ws.wind_kmh : '—') + ' km/h · ' +
+          'Rain ' + (ws.rain_probability != null ? ws.rain_probability : '—')
+          + '%</div>' +
+          '<div style="font-size:10px;color:#9E9E9E;margin-top:2px">' +
+          escapeHtml(d.confidence_label || '') + '</div>' +
+          '<div class="pest-confidence-bar">' +
+          '<div class="pest-confidence-fill" style="width:' + conf + '%">' +
+          '</div></div>' +
+          '<div style="font-size:11px;margin-top:4px">' +
+          escapeHtml(d.message || '') + '</div></div>';
+        return;
+      }
+
+      if (st === 'delay') {
+        let fails = '';
+        (d.failed_conditions || []).forEach(c => {
+          fails += '<span class="pest-fail-pill">' + escapeHtml(c) +
+            '</span>';
+        });
+        calHtml += '<div class="pest-day delay">' +
+          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">' +
+          '<span class="fert-day-date">' + formatPestDate(d.date) +
+          ' <span style="font-weight:normal;font-size:11px;color:#757575">' +
+          '(day ' + d.day_number + ')</span></span>' +
+          '<span class="zone-dot ' + zc + '"></span>' +
+          '<span class="pest-badge-delay">⏳ DELAY</span></div>' +
+          '<div style="margin-top:6px">' + badges + domNote + '</div>' +
+          '<div style="margin-top:6px">' + fails + '</div>' +
+          '<div style="font-size:11px;margin-top:6px;color:#424242">' +
+          escapeHtml(d.message || 'Check next day.') + '</div>' +
+          '<div class="pest-confidence-bar">' +
+          '<div class="pest-confidence-fill" style="width:' + conf + '%">' +
+          '</div></div></div>';
+      }
+
+      if (st === 'cooldown_skip') {
+        let cooldowns = '';
+        (d.failed_conditions || []).forEach(c => {
+          cooldowns += '<span class="pest-fail-pill">' + escapeHtml(c) +
+            '</span>';
+        });
+        calHtml += '<div class="pest-day delay">' +
+          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">' +
+          '<span class="fert-day-date">' + formatPestDate(d.date) +
+          ' <span style="font-weight:normal;font-size:11px;color:#757575">' +
+          '(day ' + d.day_number + ')</span></span>' +
+          '<span class="zone-dot ' + zc + '"></span>' +
+          '<span class="pest-badge-delay">⏸️ COOLDOWN</span></div>' +
+          '<div style="margin-top:6px">' + badges + domNote + '</div>' +
+          '<div style="margin-top:6px">' + cooldowns + '</div>' +
+          '<div style="font-size:11px;margin-top:6px;color:#424242">' +
+          escapeHtml(d.message || '') + '</div>' +
+          '<div class="pest-confidence-bar">' +
+          '<div class="pest-confidence-fill" style="width:' + conf + '%">' +
+          '</div></div></div>';
+      }
+    });
+
+    document.getElementById('pest-calendar').innerHTML = calHtml;
+
+    setStatus('pest-status',
+      '✅ Evaluation complete — ' + (summary.total_spray_days ?? 0) +
+      ' recommended spray day(s)',
+      'success');
+  } catch (e) {
+    setStatus('pest-status', '❌ Cannot reach server', 'error');
     console.error(e);
   }
 
