@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routers import auth, profile, weather, recommend, guide, planting, fertilize
+from app.routers import (
+    auth, profile, weather, recommend,
+    guide, planting, fertilize, planting_logs
+)
 
 app = FastAPI(
     title="GroWise API",
@@ -24,5 +27,6 @@ app.include_router(recommend.router)
 app.include_router(guide.router)
 app.include_router(planting.router)
 app.include_router(fertilize.router)
+app.include_router(planting_logs.router)
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

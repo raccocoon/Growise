@@ -616,6 +616,70 @@
 .zone-dot.accurate  { background: #2E7D32; }
 .zone-dot.predicted { background: #1565C0; }
 .zone-dot.estimated { background: #9E9E9E; }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-box {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.modal-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1B5E20;
+  margin-bottom: 16px;
+}
+.modal-close {
+  float: right;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #757575;
+  line-height: 1;
+}
+
+/* ── My Crops ── */
+.crop-log-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  border-left: 5px solid #2E7D32;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.crop-log-card.harvested {
+  border-color: #9E9E9E;
+  opacity: 0.75;
+}
+.progress-bar-wrap {
+  background: #E0E0E0;
+  border-radius: 6px;
+  height: 8px;
+  margin: 8px 0;
+}
+.progress-bar-fill {
+  height: 8px;
+  border-radius: 6px;
+  background: #2E7D32;
+  transition: width 0.3s;
+}
   </style>
 </head>
 <body>
@@ -636,6 +700,7 @@
     <div class="tab" onclick="showTab('login')">🔐 Login</div>
     <div class="tab" onclick="showTab('profile')">🌾 Profile</div>
     <div class="tab" onclick="showTab('view')">📋 My Profiles</div>
+    <div class="tab" onclick="showTab('mycrops')">🌿 My Crops</div>
     <div class="tab" onclick="showTab('weather')">🌦️ Weather</div>
     <div class="tab" onclick="showTab('recommend')">🌱 What to Plant</div>
     <div class="tab" onclick="showTab('guide')">📖 How to Plant</div>
@@ -858,6 +923,7 @@
 
     <!-- Crop recommendation cards -->
     <div id="rec-result"></div>
+    
   </div>
 </div>
 
@@ -954,6 +1020,13 @@
     </div>
 
     <div class="form-group">
+      <label>Load Active Crop</label>
+      <select id="fert-active-crop" onchange="fillFertFromCrop()">
+        <option value="">— Select from My Crops —</option>
+      </select>
+    </div>
+
+    <div class="form-group">
       <label>Crop Name</label>
       <input type="text" id="fert-crop"
              placeholder="e.g. Kangkung"/>
@@ -982,12 +1055,71 @@
   </div>
 </div>
 
+<!-- ══ MY CROPS ══════════════════════════════════════════════ -->
+<div class="section" id="tab-mycrops">
+  <div class="card">
+    <h2>🌿 My Crops</h2>
+    <div class="info-box blue">
+      All crops you are currently growing or have harvested.
+      Click a crop to use its data in other features.
+    </div>
+    <button class="btn" onclick="loadMyCrops()" id="btn-mycrops">
+      Refresh My Crops →
+    </button>
+    <div class="status-bar" id="mycrops-status"></div>
+    <div id="mycrops-result"></div>
+  </div>
+</div>
+
+<!-- ══ START GROWING MODAL ══════════════════════════════════ -->
+<div class="modal-overlay" id="start-growing-modal"
+     style="display:none">
+  <div class="modal-box">
+    <button class="modal-close"
+            onclick="closeStartGrowing()">✕</button>
+    <div class="modal-title">🌱 Start Growing</div>
+
+    <div id="modal-crop-info"
+         style="background:#F1F8E9;border-radius:8px;
+                padding:12px;margin-bottom:16px;font-size:13px">
+    </div>
+
+    <div class="form-group">
+      <label>Select Farm Profile</label>
+      <select id="modal-profile">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Planting Date</label>
+      <input type="date" id="modal-planted-date"/>
+    </div>
+
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <input type="text" id="modal-notes"
+             placeholder="Any notes about this crop"/>
+    </div>
+
+    <div class="status-bar" id="modal-status"></div>
+
+    <button class="btn" onclick="confirmStartGrowing()"
+            id="btn-confirm-growing"
+            style="margin-top:12px">
+      Confirm — Start Growing →
+    </button>
+  </div>
+</div>
+
 </div>
 
 <script>
 
-  
-const API = 'http://localhost:8000';
+// Same host/port as this page when served by the API; avoids localhost vs 127.0.0.1 mismatches.
+const API = (typeof location !== 'undefined' && location.protocol !== 'file:' && location.host)
+  ? ''
+  : 'http://localhost:8000';
 let token       = localStorage.getItem('growise_token') || '';
 let currentUser = JSON.parse(localStorage.getItem('growise_user') || 'null');
 
@@ -1000,7 +1132,10 @@ function showTab(name) {
 
   document.getElementById('tab-' + name).classList.add('active');
 
-  const order = ['register','login','profile','view','weather','recommend','guide','planting','fertilize'];
+  const order = [
+  'register','login','profile','view','mycrops',
+  'weather','recommend','guide','planting','fertilize'
+];
   const idx   = order.indexOf(name);
   if (idx >= 0) {
     document.querySelectorAll('.tab')[idx].classList.add('active');
@@ -1012,6 +1147,7 @@ function showTab(name) {
   if (name === 'guide')     loadGuideProfiles();
   if (name === 'planting')  loadProfilesForPlanting();
   if (name === 'fertilize') loadProfilesForFertilize();
+  if (name === 'mycrops') loadMyCrops();
   updateAuthNote();
 }
 
@@ -1911,6 +2047,17 @@ async function getRecommendations() {
               : ''}
           </div>
 
+          <!-- Start Growing button -->
+          <div style="margin-top:10px">
+            <button
+              onclick="showStartGrowing(${JSON.stringify(r).replace(/"/g, '&quot;')})"
+              style="width:100%;padding:10px;background:#2E7D32;
+                     color:white;border:none;border-radius:8px;
+                     font-size:13px;font-weight:bold;cursor:pointer">
+              🌱 Start Growing This Crop →
+            </button>
+          </div>
+
         </div>`;
     });
 
@@ -2337,6 +2484,94 @@ async function loadProfilesForPlanting() {
   }
 }
 
+// ── Load profiles for fertilize dropdown ───────────────────────
+async function loadProfilesForFertilize() {
+  if (!token) return;
+
+  // Load farm profiles
+  try {
+    const res  = await fetch(API+'/api/profile/farms',
+      {headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('fert-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name+' — '+p.land_size
+                        +' '+p.land_size_unit
+                        +' ('+p.soil_type+')';
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    } else {
+      sel.innerHTML = '<option value="">No profiles found</option>';
+    }
+  } catch(e) {
+    document.getElementById('fert-profile').innerHTML =
+      '<option value="">Cannot load</option>';
+  }
+
+  // Load active crops dropdown
+  await loadActiveCropsForFertilize();
+
+  // Auto-fill from My Crops if available
+  if (_activeCropName) {
+    document.getElementById('fert-crop').value = _activeCropName;
+  }
+  if (_activePlantedDate) {
+    document.getElementById('fert-planted').value = _activePlantedDate;
+  }
+
+  // Default planted date to today if nothing set
+  if (!document.getElementById('fert-planted').value) {
+    document.getElementById('fert-planted').value =
+      new Date().toISOString().split('T')[0];
+  }
+}
+
+async function loadActiveCropsForFertilize() {
+  try {
+    const res  = await fetch(API+'/api/planting-logs/active',
+      {headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('fert-active-crop');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select from My Crops —</option>';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(log => {
+        const o = document.createElement('option');
+        o.value = JSON.stringify({
+          crop_name:    log.crop_name,
+          planted_date: log.planted_date
+        });
+        o.textContent = log.crop_name
+          + ' — planted '
+          + log.planted_date
+          + ' ('
+          + log.days_since_planted
+          + 'd ago)';
+        sel.appendChild(o);
+      });
+    }
+  } catch(e) {
+    console.error('Cannot load active crops', e);
+  }
+}
+
+function fillFertFromCrop() {
+  const sel = document.getElementById('fert-active-crop');
+  if (!sel || !sel.value) return;
+  try {
+    const data = JSON.parse(sel.value);
+    document.getElementById('fert-crop').value    = data.crop_name;
+    document.getElementById('fert-planted').value = data.planted_date;
+  } catch(e) {
+    console.error('Parse error', e);
+  }
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   try {
@@ -2347,6 +2582,217 @@ function formatDate(dateStr) {
   } catch(e) {
     return dateStr;
   }
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function fertDayClass(d) {
+  const stage = d.growth_stage || '';
+  if (d.has_event && d.event) {
+    return d.event.should_fertilize
+      ? 'fert-day has-event confirmed'
+      : 'fert-day has-event skipped';
+  }
+  if (stage === 'seedling' || stage === 'not_planted') {
+    return 'fert-day seedling';
+  }
+  if (stage === 'maturity') return 'fert-day maturity';
+  return 'fert-day no-event';
+}
+
+async function getFertilizeSchedule() {
+  const btn = document.getElementById('btn-fertilize');
+  clearStatus('fert-status');
+  document.getElementById('fert-summary').innerHTML = '';
+  document.getElementById('fert-next').innerHTML = '';
+  document.getElementById('fert-calendar').innerHTML = '';
+
+  if (!token) {
+    setStatus('fert-status', '⚠️ Login first', 'error');
+    return;
+  }
+
+  const pid = document.getElementById('fert-profile').value;
+  if (!pid) {
+    setStatus('fert-status', '⚠️ Select a farm profile', 'error');
+    return;
+  }
+
+  const cropName = document.getElementById('fert-crop').value.trim();
+  if (!cropName) {
+    setStatus('fert-status', '⚠️ Enter a crop name', 'error');
+    return;
+  }
+
+  const planted = document.getElementById('fert-planted').value;
+  if (!planted) {
+    setStatus('fert-status', '⚠️ Enter planted date', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  setStatus('fert-status',
+    '⏳ Building schedule from 30-day forecast...',
+    'loading');
+
+  try {
+    const res = await fetch(API + '/api/when-to-fertilize', {
+      method: 'POST',
+      headers: hdrs(),
+      body: JSON.stringify({
+        profile_id: pid,
+        crop_name: cropName,
+        planted_date: planted,
+        crisis_mode: false
+      })
+    });
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      setStatus('fert-status',
+        '❌ Invalid response (HTTP ' + res.status + ')',
+        'error');
+      btn.disabled = false;
+      return;
+    }
+
+    if (!res.ok || !data.success) {
+      let detail = data && (data.detail ?? data.message);
+      if (detail != null && typeof detail !== 'string') {
+        try { detail = JSON.stringify(detail); }
+        catch (e2) { detail = String(detail); }
+      }
+      if (!detail) detail = 'HTTP ' + res.status;
+      setStatus('fert-status', '❌ ' + detail, 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    if (data.crisis_mode) {
+      document.getElementById('fert-next').innerHTML =
+        '<div class="info-box orange">' +
+        escapeHtml(data.crisis_note || 'Fertilizing suspended.') +
+        '</div>';
+      setStatus('fert-status', '⚠️ Crisis / heavy rain mode', 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    const summary = data.summary || {};
+    const daily = data.daily || [];
+
+    const sumHtml = `
+      <h3 style="margin-top:16px">📋 Schedule overview</h3>
+      <div class="fert-summary-grid">
+        <div class="fert-summary-box">
+          <span class="fsv">${summary.total_fertilize_days ?? 0}</span>
+          <span class="fsk">Fertilize days</span>
+        </div>
+        <div class="fert-summary-box">
+          <span class="fsv">${summary.confirmed_days ?? 0}</span>
+          <span class="fsk">Good weather</span>
+        </div>
+        <div class="fert-summary-box">
+          <span class="fsv">${summary.skipped_days ?? 0}</span>
+          <span class="fsk">Weather skip</span>
+        </div>
+        <div class="fert-summary-box">
+          <span class="fsv">${summary.estimated_plants ?? '—'}</span>
+          <span class="fsk">Est. plants</span>
+        </div>
+        <div class="fert-summary-box">
+          <span class="fsv">${summary.land_sqm ?? '—'}</span>
+          <span class="fsk">Land (m²)</span>
+        </div>
+      </div>`;
+    document.getElementById('fert-summary').innerHTML = sumHtml;
+
+    if (summary.next_fertilize_date) {
+      document.getElementById('fert-next').innerHTML = `
+        <div class="info-box green" style="margin-top:8px">
+          <b>Next application:</b> ${formatDate(summary.next_fertilize_date)}
+          ${summary.next_fertilizer_type
+            ? ' — ' + escapeHtml(summary.next_fertilizer_type)
+            : ''}
+        </div>`;
+    } else {
+      document.getElementById('fert-next').innerHTML =
+        '<div class="info-box orange" style="margin-top:8px">' +
+        'No upcoming fertilize day with clear weather in this window ' +
+        '(see skipped days in the calendar below).' +
+        '</div>';
+    }
+
+    let calHtml =
+      '<h3 style="margin-top:20px">📅 30-day fertilize calendar</h3>';
+    daily.forEach(d => {
+      const stage = d.growth_stage || '';
+      const stageBadge = stage.replace(/_/g, ' ');
+      const z = d.zone === 'accurate' ? 'accurate'
+        : d.zone === 'predicted' ? 'predicted' : '';
+      calHtml += `
+        <div class="${fertDayClass(d)}">
+          <div class="fert-day-top">
+            <span class="fert-day-date">
+              ${formatDate(d.date)}
+              <span style="font-weight:normal;font-size:11px;color:#757575">
+                (day ${d.day_number})
+              </span>
+            </span>
+            <span class="fert-day-stage stage-${stage}">
+              ${escapeHtml(stageBadge)}
+            </span>
+          </div>`;
+      if (d.skip_reason && !d.has_event) {
+        calHtml += '<div class="fert-event-detail" style="color:#757575">' +
+          escapeHtml(d.skip_reason) + '</div>';
+      }
+      if (d.has_event && d.event) {
+        const ev = d.event;
+        calHtml += '<div class="fert-event-detail">' +
+          escapeHtml(ev.message || '') + '</div>';
+        calHtml += '<div style="font-size:11px;color:#424242;margin-top:4px">' +
+          '<b>' + escapeHtml(ev.fertilizer_type || '') + '</b> · ' +
+          escapeHtml(ev.amount || '') + '</div>';
+        calHtml += '<div style="font-size:11px;margin-top:4px">🕐 ' +
+          escapeHtml(ev.best_time || '') + '</div>';
+        if (ev.should_fertilize) {
+          calHtml += '<span class="fert-confirmed-badge">' +
+            '✓ Apply this day if conditions hold</span>';
+        } else if (ev.skip_reason) {
+          calHtml += '<span class="fert-skip-reason">' +
+            escapeHtml(ev.skip_reason) + '</span>';
+        }
+      }
+      if (z) {
+        calHtml += '<div style="margin-top:6px;font-size:10px;color:#9E9E9E">' +
+          '<span class="zone-dot ' + z + '"></span>' +
+          escapeHtml(d.confidence_label || d.zone || '') +
+          '</div>';
+      }
+      calHtml += '</div>';
+    });
+    document.getElementById('fert-calendar').innerHTML = calHtml;
+
+    const okDays = summary.confirmed_days ?? 0;
+    setStatus('fert-status',
+      '✅ Schedule ready — ' + okDays + ' clear day(s) to fertilize',
+      'success');
+  } catch (e) {
+    setStatus('fert-status', '❌ Cannot reach server', 'error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
 }
 
 function scoreCellClass(score, blocked) {
@@ -2451,6 +2897,15 @@ async function getPlantingWindows() {
               ${w.best_time_reason}
             </div>
             ${w.message ? `<div style="font-size:12px;color:#1B5E20">${w.message}</div>` : ''}
+            
+            <button
+              onclick="showStartGrowingFromWindow('${w.start_date}','${cropName}')"
+              style="width:100%;margin-top:10px;padding:10px;
+                     background:#2E7D32;color:white;border:none;
+                     border-radius:8px;font-size:13px;
+                     font-weight:bold;cursor:pointer">
+              🌱 Plant on ${formatDate(w.start_date)} →
+            </button>
           </div>`;
       });
       document.getElementById('plant-windows').innerHTML = winHtml;
@@ -2461,6 +2916,10 @@ async function getPlantingWindows() {
           ${data.message || ''}
         </div>`;
     }
+
+    // After windows render add Start Growing shortcut
+    document.getElementById('plant-windows').innerHTML += `
+      <div style="margin-top:12px" id="plant-start-btns"></div>`;
 
     // Score calendar
     if (dailyScores.length > 0) {
@@ -2508,6 +2967,411 @@ async function getPlantingWindows() {
   btn.disabled = false;
 }
 
+// ── Start Growing from Planting Window ───────────────────────────
+function showStartGrowingFromWindow(startDate, cropName) {
+  // If we have last recommendations use first crop
+  // else create minimal crop object
+  const crop = _lastRecs.length > 0
+    ? _lastRecs[0]
+    : {
+        crop_name:            cropName || 'Unknown',
+        local_name:           '',
+        growth_duration_days: 30,
+        estimated_cost_myr:   0,
+        difficulty:           'Unknown',
+        flood_tolerant:       false,
+        drought_tolerant:     false,
+        weather_suitability:  'Unknown',
+        confidence:           0
+      };
+
+  // Show modal with pre-filled date
+  showStartGrowing(crop);
+
+  // Pre-fill date after modal opens
+  setTimeout(() => {
+    document.getElementById('modal-planted-date').value = startDate;
+  }, 100);
+}
+
+// ── Currently selected crop for modal ────────────────────────
+let _modalCrop = null;
+
+// ── Show Start Growing Modal ──────────────────────────────────
+async function showStartGrowing(crop) {
+  _modalCrop = crop;
+
+  // Set default planted date to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('modal-planted-date').value = today;
+  document.getElementById('modal-notes').value = '';
+  clearStatus('modal-status');
+
+  // Show crop info
+  document.getElementById('modal-crop-info').innerHTML = `
+    <b>${crop.crop_name}</b>
+    ${crop.local_name ? '('+crop.local_name+')' : ''}
+    <br/>
+    Growth: ${crop.growth_duration_days} days
+    · Est. cost: RM ${crop.estimated_cost_myr}
+    · Difficulty: ${crop.difficulty}
+  `;
+
+  // Load profiles into modal
+  await loadProfilesForModal();
+
+  // Show modal
+  document.getElementById('start-growing-modal').style.display = 'flex';
+}
+
+// ── Close Modal ───────────────────────────────────────────────
+function closeStartGrowing() {
+  document.getElementById('start-growing-modal').style.display = 'none';
+  _modalCrop = null;
+}
+
+// ── Load profiles for modal ───────────────────────────────────
+async function loadProfilesForModal() {
+  try {
+    const res  = await fetch(API+'/api/profile/farms',
+      {headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('modal-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name+' — '
+                        +p.land_size+' '+p.land_size_unit;
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    }
+  } catch(e) {
+    console.error('Cannot load profiles for modal', e);
+  }
+}
+
+// ── Confirm Start Growing ─────────────────────────────────────
+async function confirmStartGrowing() {
+  const btn = document.getElementById('btn-confirm-growing');
+
+  if (!_modalCrop) return;
+
+  const pid     = document.getElementById('modal-profile').value;
+  const planted = document.getElementById('modal-planted-date').value;
+  const notes   = document.getElementById('modal-notes').value;
+
+  clearStatus('modal-status');
+
+  if (!pid) {
+    setStatus('modal-status','⚠️ Select a profile','error'); return;
+  }
+  if (!planted) {
+    setStatus('modal-status','⚠️ Enter planting date','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('modal-status','⏳ Saving...','loading');
+
+  try {
+    const res  = await fetch(API+'/api/planting-logs/start',{
+      method:  'POST',
+      headers: hdrs(),
+      body:    JSON.stringify({
+        profile_id:            pid,
+        crop_name:             _modalCrop.crop_name,
+        local_name:            _modalCrop.local_name     || '',
+        growth_duration_days:  _modalCrop.growth_duration_days || 30,
+        planted_date:          planted,
+        estimated_cost_myr:    _modalCrop.estimated_cost_myr   || 0,
+        difficulty:            _modalCrop.difficulty     || '',
+        flood_tolerant:        _modalCrop.flood_tolerant || false,
+        drought_tolerant:      _modalCrop.drought_tolerant || false,
+        weather_suitability:   _modalCrop.weather_suitability || '',
+        confidence:            _modalCrop.confidence     || 0,
+        notes:                 notes
+      })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      setStatus('modal-status',
+        `✅ ${_modalCrop.crop_name} added! Est. harvest: ` 
+        +data.estimated_harvest,
+        'success');
+
+      // Auto-fill other features with this data
+      _activePlantedDate = planted;
+      _activeCropName    = _modalCrop.crop_name;
+
+      setTimeout(() => {
+        closeStartGrowing();
+        showTab('mycrops');
+      }, 2000);
+
+    } else {
+      setStatus('modal-status',
+        '❌ '+(data.detail||'Failed'),'error');
+    }
+  } catch(e) {
+    setStatus('modal-status','❌ Cannot reach server','error');
+  }
+
+  btn.disabled = false;
+}
+
+// ── Global vars for active crop ───────────────────────────────
+let _activePlantedDate = '';
+let _activeCropName    = '';
+
+// ── Load My Crops ─────────────────────────────────────────────
+async function loadMyCrops() {
+  const btn = document.getElementById('btn-mycrops');
+  clearStatus('mycrops-status');
+  document.getElementById('mycrops-result').innerHTML = '';
+
+  if (!token) {
+    setStatus('mycrops-status','⚠️ Login first','error'); return;
+  }
+
+  btn.disabled = true;
+  setStatus('mycrops-status','⏳ Loading your crops...','loading');
+
+  try {
+    const res  = await fetch(API+'/api/planting-logs',
+      {headers:hdrs()});
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      setStatus('mycrops-status',
+        '❌ Bad response (HTTP ' + res.status + '). Is the API running on this host?',
+        'error');
+      btn.disabled = false;
+      return;
+    }
+
+    if (!res.ok || !data.success) {
+      let detail = data && (data.detail ?? data.message);
+      if (detail != null && typeof detail !== 'string') {
+        try { detail = JSON.stringify(detail); } catch (e) { detail = String(detail); }
+      }
+      if (!detail) detail = 'HTTP ' + res.status;
+      setStatus('mycrops-status','❌ ' + detail,'error');
+      btn.disabled = false;
+      return;
+    }
+
+    if (data.data.length === 0) {
+      setStatus('mycrops-status',
+        '📭 No crops yet. Go to What to Plant and click Start Growing.',
+        'error');
+      btn.disabled = false;
+      return;
+    }
+
+    setStatus('mycrops-status',
+      `✅ Found ${data.total} crop log(s)`,'success');
+
+    const stageEmoji = {
+      seedling:   '🌱',
+      vegetative: '🌿',
+      flowering:  '🌸',
+      fruiting:   '🍅',
+      maturity:   '🌾',
+      not_planted:'🌰'
+    };
+
+    let html = '';
+    data.data.forEach(log => {
+      const harvested = log.status === 'harvested';
+      const progress  = log.growth_progress || 0;
+      const stage     = log.growth_stage    || 'seedling';
+      const emoji     = stageEmoji[stage]   || '🌱';
+      const progressColor =
+        progress >= 80 ? '#E65100' :
+        progress >= 50 ? '#FFA000' : '#2E7D32';
+
+      html += `
+        <div class="crop-log-card ${harvested ? 'harvested' : ''}">
+
+          <div style="display:flex;justify-content:space-between;
+                      align-items:center;margin-bottom:8px">
+            <div>
+              <span style="font-size:16px;font-weight:bold;
+                           color:#1B5E20">
+                ${emoji} ${log.crop_name}
+              </span>
+              ${log.local_name
+                ? `<span style="font-size:12px;color:#757575;
+                               margin-left:6px">
+                     (${log.local_name})
+                   </span>`
+                : ''}
+            </div>
+            <span class="badge ${harvested ? 'grey' : 'green'}">
+              ${harvested ? '✅ Harvested' : '🌿 Growing'}
+            </span>
+          </div>
+
+          ${!harvested ? `
+          <!-- Progress bar -->
+          <div style="font-size:11px;color:#757575;
+                      margin-bottom:4px;display:flex;
+                      justify-content:space-between">
+            <span>${emoji} ${stage}</span>
+            <span style="color:${progressColor};font-weight:bold">
+              ${progress}% complete
+            </span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill"
+                 style="width:${progress}%;
+                        background:${progressColor}">
+            </div>
+          </div>` : ''}
+
+          <!-- Details -->
+          <div class="profile-card"
+               style="margin-top:8px;padding:8px 12px">
+            <div class="field">
+              <span class="key">📅 Planted</span>
+              <span class="val">${formatDate(log.planted_date)}</span>
+            </div>
+            <div class="field">
+              <span class="key">🌾 Est. Harvest</span>
+              <span class="val">
+                ${formatDate(log.estimated_harvest)}
+              </span>
+            </div>
+            ${log.actual_harvest ? `
+            <div class="field">
+              <span class="key">✅ Actual Harvest</span>
+              <span class="val">
+                ${formatDate(log.actual_harvest)}
+              </span>
+            </div>` : ''}
+            <div class="field">
+              <span class="key">📆 Days Since Planted</span>
+              <span class="val">${log.days_since_planted || 0} days</span>
+            </div>
+            <div class="field">
+              <span class="key">⏱️ Growth Duration</span>
+              <span class="val">
+                ${log.growth_duration_days} days
+              </span>
+            </div>
+            ${log.difficulty ? `
+            <div class="field">
+              <span class="key">🎯 Difficulty</span>
+              <span class="val">${log.difficulty}</span>
+            </div>` : ''}
+            ${log.confidence ? `
+            <div class="field">
+              <span class="key">📊 AI Confidence</span>
+              <span class="val">${log.confidence}%</span>
+            </div>` : ''}
+          </div>
+
+          <!-- Action buttons -->
+          <div style="display:flex;gap:8px;margin-top:10px">
+            ${!harvested ? `
+            <button
+              onclick="markHarvested('${log.id}','${log.crop_name}')"
+              style="flex:1;padding:8px;background:#00695C;
+                     color:white;border:none;border-radius:8px;
+                     font-size:12px;font-weight:bold;cursor:pointer">
+              🌾 Mark as Harvested
+            </button>
+            <button
+              onclick="useCropInFeatures('${log.crop_name}','${log.planted_date}')"
+              style="flex:1;padding:8px;background:#1565C0;
+                     color:white;border:none;border-radius:8px;
+                     font-size:12px;font-weight:bold;cursor:pointer">
+              📅 Use in Calendar
+            </button>` : ''}
+            <button
+              onclick="deleteCropLog('${log.id}','${log.crop_name}')"
+              style="padding:8px 12px;background:#FFEBEE;
+                     color:#B71C1C;border:none;border-radius:8px;
+                     font-size:12px;font-weight:bold;cursor:pointer">
+              🗑️
+            </button>
+          </div>
+
+        </div>`;
+    });
+
+    document.getElementById('mycrops-result').innerHTML = html;
+
+  } catch(e) {
+    setStatus('mycrops-status','❌ Cannot reach server','error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+// ── Mark as Harvested ─────────────────────────────────────────
+async function markHarvested(logId, cropName) {
+  if (!confirm(`Mark ${cropName} as harvested today?`)) return;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    const res  = await fetch(
+      API+'/api/planting-logs/'+logId+'/harvest',{
+        method:  'PATCH',
+        headers: hdrs(),
+        body:    JSON.stringify({actual_harvest: today})
+      });
+    const data = await res.json();
+
+    if (data.success) {
+      alert(`✅ ${cropName} marked as harvested!`);
+      loadMyCrops();
+    } else {
+      alert('❌ Failed: '+(data.detail||'Unknown error'));
+    }
+  } catch(e) {
+    alert('❌ Cannot reach server');
+  }
+}
+
+// ── Use crop data in other features ──────────────────────────
+function useCropInFeatures(cropName, plantedDate) {
+  _activeCropName    = cropName;
+  _activePlantedDate = plantedDate;
+
+  // Auto-fill fertilize tab
+  document.getElementById('fert-crop').value    = cropName;
+  document.getElementById('fert-planted').value = plantedDate;
+
+  alert(`✅ ${cropName} data loaded!\n` 
+      + `Go to 💊 Fertilize or 📅 When to Plant tab.`);
+  showTab('fertilize');
+}
+
+// ── Delete crop log ───────────────────────────────────────────
+async function deleteCropLog(logId, cropName) {
+  if (!confirm(`Delete log for ${cropName}? This cannot be undone.`))
+    return;
+
+  try {
+    const res  = await fetch(
+      API+'/api/planting-logs/'+logId,{
+        method:  'DELETE',
+        headers: hdrs()
+      });
+    const data = await res.json();
+    if (data.success) loadMyCrops();
+  } catch(e) {
+    alert('❌ Cannot reach server');
+  }
+}
 
 
 // ── Init ─────────────────────────────────────────────────────────

@@ -1,69 +1,22 @@
 import httpx
 import json
-import re
-import asyncio
 from datetime import datetime, timedelta
 from app.config import OPENROUTER_API_KEY
 
-try:
-    import json_repair
-except ImportError:
-    json_repair = None
-
-
-def _parse_json_safe(content: str) -> dict:
-    """Parse JSON from AI response, handling markdown, trailing commas, unescaped quotes, etc."""
-    content = (content or "").strip()
-    # Remove markdown code fences
-    if "```" in content:
-        content = re.sub(r"^```\w*\n?", "", content)
-        content = re.sub(r"\n?```\s*$", "", content)
-        content = content.strip()
-    # Extract JSON object (first { to matching })
-    start = content.find("{")
-    if start >= 0:
-        depth, end = 0, start
-        for i, c in enumerate(content[start:], start):
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    end = i + 1
-                    break
-        content = content[start:end]
-    # Fix trailing commas (common LLM mistake)
-    content = re.sub(r",\s*}", "}", content)
-    content = re.sub(r",\s*]", "]", content)
-    # Parse: use json_repair if available (fixes unescaped quotes, etc. from LLMs)
-    if json_repair:
-        return json_repair.loads(content)
-    return json.loads(content)
-
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-# openrouter/free routes to available free models; avoids rate limits on single model
-MODEL = "openrouter/free"
-# Fallbacks if router fails (e.g. 429)
-FALLBACK_MODELS = [
-    "google/gemma-2-9b-it:free",
-    "mistralai/mistral-7b-instruct:free",
-    "microsoft/phi-3-mini-128k-instruct:free",
-    "qwen/qwen-2-7b-instruct:free",
+
+# Model priority list — tries each in order if previous fails
+MODELS = [
+    "meta-llama/llama-3.3-70b-instruct:free",
     "meta-llama/llama-3.2-3b-instruct:free",
 ]
 
-def _get_headers():
-    """Build headers with current API key (loaded at request time)."""
-    if not OPENROUTER_API_KEY:
-        raise Exception(
-            "OPENROUTER_API_KEY is missing. Add it to backend/.env — get a free key at https://openrouter.ai/settings/keys"
-        )
-    return {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type":  "application/json",
-        "HTTP-Referer":  "http://localhost:8000",
-        "X-Title":       "GroWise"
-    }
+HEADERS = {
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    "Content-Type":  "application/json",
+    "HTTP-Referer":  "http://localhost:8000",
+    "X-Title":       "GroWise"
+}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -76,64 +29,263 @@ async def _call_ai(
     max_tokens:    int = 2000
 ) -> dict:
     """
-    Call OpenRouter. Uses openrouter/free router, falls back to alternatives on 429.
+    Call OpenRouter first, then fallback data if AI fails.
     Returns parsed JSON dict.
     """
-    headers = _get_headers()
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
-    models_to_try = [MODEL] + FALLBACK_MODELS
+    try:
+        # Try OpenRouter first
+        return await _call_openrouter(system_prompt, user_prompt, max_tokens)
+    except Exception as e:
+        print(f"OpenRouter failed: {e}")
+        print("Using fallback recommendations...")
+        
+        # Return fallback recommendations based on farmer profile
+        return _get_fallback_recommendations(system_prompt, user_prompt)
+
+
+def _get_fallback_recommendations(system_prompt: str, user_prompt: str) -> dict:
+    """
+    Return sensible fallback recommendations when AI services fail.
+    """
+    print("Generating fallback crop recommendations...")
+    
+    # Extract basic info from user prompt
+    is_beginner = "beginner" in user_prompt.lower()
+    land_small = "100 sqft" in user_prompt.lower() or "small" in user_prompt.lower()
+    
+    # Basic recommendations for Sarawak farmers
+    recommendations = []
+    
+    if is_beginner and land_small:
+        recommendations = [
+            {
+                "rank": 1,
+                "crop_name": "kangkung",
+                "local_name": "Water Spinach",
+                "confidence": 90,
+                "confidence_label": "Excellent",
+                "difficulty": "Very Easy",
+                "why_recommended": "Perfect for beginners - grows quickly in small spaces with minimal care. Thrives in Sarawak's humid climate.",
+                "growth_duration_days": 30,
+                "estimated_harvest_date": (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
+                "estimated_cost_myr": 10,
+                "expected_yield": "2-3 kg per sqft",
+                "weather_suitability": "Excellent",
+                "main_concern": "Watch for pests in humid weather",
+                "flood_tolerant": True,
+                "drought_tolerant": False,
+                "min_land_sqft": 10
+            },
+            {
+                "rank": 2,
+                "crop_name": "bayam",
+                "local_name": "Spinach",
+                "confidence": 85,
+                "confidence_label": "Very Good",
+                "difficulty": "Very Easy",
+                "why_recommended": "Fast-growing leafy green perfect for small spaces. Grows well in partial shade common in Sarawak.",
+                "growth_duration_days": 25,
+                "estimated_harvest_date": (datetime.now() + timedelta(days=25)).strftime('%Y-%m-%d'),
+                "estimated_cost_myr": 8,
+                "expected_yield": "1-2 kg per sqft",
+                "weather_suitability": "Very Good",
+                "main_concern": "Needs regular watering in dry spells",
+                "flood_tolerant": True,
+                "drought_tolerant": False,
+                "min_land_sqft": 10
+            },
+            {
+                "rank": 3,
+                "crop_name": "sawi",
+                "local_name": "Mustard Green",
+                "confidence": 80,
+                "confidence_label": "Good",
+                "difficulty": "Easy",
+                "why_recommended": "Reliable crop for beginners with good disease resistance. Suitable for Sarawak's tropical climate.",
+                "growth_duration_days": 35,
+                "estimated_harvest_date": (datetime.now() + timedelta(days=35)).strftime('%Y-%m-%d'),
+                "estimated_cost_myr": 12,
+                "expected_yield": "1.5-2.5 kg per sqft",
+                "weather_suitability": "Good",
+                "main_concern": "May bolt in very hot weather",
+                "flood_tolerant": True,
+                "drought_tolerant": False,
+                "min_land_sqft": 10
+            }
+        ]
+    else:
+        # General recommendations for other scenarios
+        recommendations = [
+            {
+                "rank": 1,
+                "crop_name": "chili",
+                "local_name": "Cili",
+                "confidence": 85,
+                "confidence_label": "Very Good",
+                "difficulty": "Easy",
+                "why_recommended": "Popular crop in Sarawak with good market demand. Suitable for most soil types.",
+                "growth_duration_days": 60,
+                "estimated_harvest_date": (datetime.now() + timedelta(days=60)).strftime('%Y-%m-%d'),
+                "estimated_cost_myr": 15,
+                "expected_yield": "0.5-1 kg per plant",
+                "weather_suitability": "Very Good",
+                "main_concern": "Needs regular fertilizing for good yields",
+                "flood_tolerant": False,
+                "drought_tolerant": True,
+                "min_land_sqft": 20
+            },
+            {
+                "rank": 2,
+                "crop_name": "cucumber",
+                "local_name": "Timun",
+                "confidence": 80,
+                "confidence_label": "Good",
+                "difficulty": "Easy",
+                "why_recommended": "Fast-growing vine crop perfect for Sarawak's climate. Good yield for space used.",
+                "growth_duration_days": 45,
+                "estimated_harvest_date": (datetime.now() + timedelta(days=45)).strftime('%Y-%m-%d'),
+                "estimated_cost_myr": 20,
+                "expected_yield": "2-4 kg per plant",
+                "weather_suitability": "Good",
+                "main_concern": "Requires trellis support for best growth",
+                "flood_tolerant": False,
+                "drought_tolerant": True,
+                "min_land_sqft": 40
+            },
+            {
+                "rank": 3,
+                "crop_name": "tomato",
+                "local_name": "Tomato",
+                "confidence": 75,
+                "confidence_label": "Good",
+                "difficulty": "Easy",
+                "why_recommended": "Versatile crop popular in Sarawak. Can be grown in containers or ground.",
+                "growth_duration_days": 70,
+                "estimated_harvest_date": (datetime.now() + timedelta(days=70)).strftime('%Y-%m-%d'),
+                "estimated_cost_myr": 25,
+                "expected_yield": "2-3 kg per plant",
+                "weather_suitability": "Good",
+                "main_concern": "Prone to pests in humid conditions",
+                "flood_tolerant": False,
+                "drought_tolerant": False,
+                "min_land_sqft": 30
+            }
+        ]
+    
+    return {"recommendations": recommendations}
+
+
+async def _call_openrouter(
+    system_prompt: str,
+    user_prompt:   str,
+    max_tokens:    int = 2000
+) -> dict:
+    """
+    Call OpenRouter. Tries models in order until one works.
+    Returns parsed JSON dict.
+    """
     last_error = None
 
-    for attempt, model in enumerate(models_to_try):
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": 0.3,
-            "max_tokens": max_tokens,
-            "response_format": {"type": "json_object"}
-        }
-
+    for model in MODELS:
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            print(f"Trying model: {model}")
+
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user",   "content": user_prompt}
+                ],
+                "temperature": 0.3,
+                "max_tokens":  max_tokens
+            }
+
+            async with httpx.AsyncClient(timeout=60.0) as client:
                 res = await client.post(
                     OPENROUTER_URL,
-                    headers=headers,
+                    headers=HEADERS,
                     json=payload
                 )
 
-            if res.status_code == 200:
-                result = res.json()
-                content = result["choices"][0]["message"]["content"]
-                try:
-                    return _parse_json_safe(content)
-                except json.JSONDecodeError as je:
-                    raise Exception(
-                        f"AI returned invalid JSON: {je}. "
-                        f"First 500 chars: {repr((content or '')[:500])}"
-                    )
+            print(f"Status: {res.status_code} for {model}")
 
-            if res.status_code == 429:
-                last_error = Exception(f"OpenRouter error 429: {res.text}")
-                # Brief delay before retry/fallback
-                if attempt < len(models_to_try) - 1:
-                    await asyncio.sleep(2.0)
+            if res.status_code != 200:
+                print(f"Error response: {res.text[:300]}")
+                last_error = f"HTTP {res.status_code}"
                 continue
 
-            raise Exception(f"OpenRouter error {res.status_code}: {res.text}")
+            result  = res.json()
+            content = result["choices"][0]["message"]["content"]
 
+            print(f"Content preview: {content[:200] if content else 'EMPTY'}")
+
+            if not content or content.strip() == "":
+                print(f"Empty response from {model} — trying next")
+                last_error = "Empty response"
+                continue
+
+            parsed = _parse_json(content)
+            if parsed is not None:
+                print(f"Success with model: {model}")
+                return parsed
+
+            print(f"Invalid JSON from {model} — trying next")
+            print(f"Raw content: {content[:300]}")
+            last_error = "Invalid JSON"
+ 
         except Exception as e:
-            last_error = e
-            if "429" in str(e) and attempt < len(models_to_try) - 1:
-                await asyncio.sleep(2.0)
-                continue
-            raise
+            print(f"Exception with {model}: {e}")
+            last_error = str(e)
+            continue
 
-    if last_error:
-        raise last_error
-    raise Exception("OpenRouter: no model succeeded")
+    raise Exception(
+        f"All models failed. Last error: {last_error}"
+    )
+
+
+def _parse_json(content: str) -> dict:
+    """
+    Safely parse JSON from AI response.
+    Handles markdown fences and extra text.
+    """
+    if not content:
+        return None
+
+    content = content.strip()
+
+    # Try direct parse first
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        pass
+
+    # Strip markdown fences ```json
+    if "```json" in content:
+        try:
+            start = content.index("```json") + 7
+            end   = content.index("```", start)
+            return json.loads(content[start:end].strip())
+        except Exception:
+            pass
+
+    # Strip markdown fences ```
+    if "```" in content:
+        try:
+            start = content.index("```") + 3
+            end   = content.index("```", start)
+            return json.loads(content[start:end].strip())
+        except Exception:
+            pass
+
+    # Find JSON object anywhere in response
+    try:
+        start = content.index("{")
+        end   = content.rindex("}") + 1
+        return json.loads(content[start:end])
+    except Exception:
+        pass
+
+    return None
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -194,17 +346,17 @@ long bean=30sqft, lady finger=20sqft, cili padi=20sqft.
 """
 
     # Convert land to sqft for comparison
-    land     = profile.get("land_size", 0)
-    unit     = profile.get("land_size_unit", "sqft")
-    if unit == "acre":     land_sqft = land * 43560
+    land = profile.get("land_size", 0)
+    unit = profile.get("land_size_unit", "sqft")
+    if unit == "acre":      land_sqft = land * 43560
     elif unit == "hectare": land_sqft = land * 107639
     else:                   land_sqft = land
 
-    today    = datetime.now()
-    harvest  = today + timedelta(days=60)
+    today   = datetime.now()
+    harvest = today + timedelta(days=60)
 
     user_prompt = f"""
-Recommend 3 crops for this Sarawak farmer:
+Recommend 5 crops for this Sarawak farmer:
 
 FARMER PROFILE:
   Experience level : {profile.get('experience_level')}
@@ -254,7 +406,8 @@ Return this exact JSON structure:
 
     return await _call_ai(system_prompt, user_prompt, max_tokens=2000)
 
-    # ════════════════════════════════════════════════════════════════════════════
+
+# ════════════════════════════════════════════════════════════════════════════
 # FEATURE 4 — HOW TO PLANT
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -268,8 +421,6 @@ async def get_planting_guide(
     profile:         dict,
     weather_summary: dict
 ) -> dict:
-
-    from datetime import datetime
 
     # Cache key — same farmer + crop + month = serve from cache
     month     = datetime.now().strftime("%Y-%m")
@@ -320,8 +471,8 @@ IMPORTANT:
 - Return valid JSON only — no markdown, no extra text
 """
 
-    land     = profile.get("land_size", 0)
-    unit     = profile.get("land_size_unit", "sqft")
+    land = profile.get("land_size", 0)
+    unit = profile.get("land_size_unit", "sqft")
     if unit == "acre":      land_sqft = land * 43560
     elif unit == "hectare": land_sqft = land * 107639
     else:                   land_sqft = land
@@ -435,5 +586,4 @@ Return this exact JSON structure:
 def _guide_expired(key: str) -> bool:
     if key not in _guide_timestamps:
         return True
-    from datetime import datetime, timedelta
     return datetime.now() - _guide_timestamps[key] > timedelta(days=7)
