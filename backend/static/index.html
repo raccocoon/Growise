@@ -756,6 +756,178 @@
   color: #757575;
 }
 
+/* ── Harvest ── */
+.harvest-readiness-card {
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  text-align: center;
+  border: 2px solid;
+}
+.harvest-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 14px 0;
+  overflow-x: auto;
+}
+.timeline-step {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  min-width: 70px;
+}
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin: 0 auto 4px;
+}
+.timeline-line {
+  flex: 1;
+  height: 2px;
+  background: #E0E0E0;
+  margin-top: -10px;
+}
+.timeline-line.active {
+  background: #2E7D32;
+}
+
+.harvest-day-card {
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-left: 4px solid;
+  font-size: 13px;
+}
+.harvest-day-card.in-window {
+  background: #E8F5E9;
+  border-color: #2E7D32;
+}
+.harvest-day-card.in-window.poor {
+  background: #FFF3E0;
+  border-color: #E65100;
+}
+.harvest-day-card.in-window.best {
+  background: #E8F5E9;
+  border-color: #FFD700;
+  box-shadow: 0 0 0 2px #FFD700;
+}
+.harvest-day-card.before-window {
+  background: #FAFAFA;
+  border-color: #E0E0E0;
+}
+.harvest-day-card.after-window {
+  background: #FFEBEE;
+  border-color: #FFCDD2;
+}
+
+.harvest-score-bar {
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+}
+
+.alert-banner {
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  border-left: 5px solid;
+}
+.alert-banner.critical {
+  background: #FFEBEE;
+  color: #B71C1C;
+  border-color: #B71C1C;
+}
+.alert-banner.warning {
+  background: #FFF3E0;
+  color: #E65100;
+  border-color: #E65100;
+}
+
+/* ── Crisis ── */
+.crisis-banner {
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  border-left: 6px solid;
+  font-size: 14px;
+}
+.crisis-banner.crisis {
+  background: #FFEBEE;
+  border-color: #B71C1C;
+  color: #B71C1C;
+}
+.crisis-banner.warning {
+  background: #FFF3E0;
+  border-color: #E65100;
+  color: #E65100;
+}
+.crisis-banner.normal {
+  background: #E8F5E9;
+  border-color: #2E7D32;
+  color: #2E7D32;
+}
+
+.crisis-score-ring {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: 0 auto 14px;
+  border: 6px solid;
+  font-weight: bold;
+}
+
+.trigger-item {
+  background: #FFEBEE;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #B71C1C;
+  margin-bottom: 4px;
+}
+
+.safe-crop-pill {
+  display: inline-block;
+  background: #E8F5E9;
+  color: #2E7D32;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  margin: 3px;
+}
+
+/* ── Global crisis top banner ── */
+.global-crisis-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 999;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+  display: none;
+}
+.global-crisis-bar.crisis {
+  background: #B71C1C;
+  color: white;
+  display: block;
+}
+.global-crisis-bar.warning {
+  background: #E65100;
+  color: white;
+  display: block;
+}
+
 /* ── Modal ── */
 .modal-overlay {
   position: fixed;
@@ -823,6 +995,8 @@
 </head>
 <body>
 
+<div class="global-crisis-bar" id="global-crisis-bar"></div>
+
 <div class="header">
   <h1>🌱 GroWise</h1>
   <p>Smart Agricultural Advisory System — Sarawak, Malaysia</p>
@@ -846,6 +1020,8 @@
     <div class="tab" onclick="showTab('planting')">📅 When to Plant</div>
     <div class="tab" onclick="showTab('fertilize')">💊 When to Fertilize</div>
     <div class="tab" onclick="showTab('pesticide')">🧪 Pesticide</div>
+    <div class="tab" onclick="showTab('harvest')">🌾 Harvest</div>
+    <div class="tab" onclick="showTab('crisis')">🚨 Crisis</div>
   </div>
 
   <!-- ══ REGISTER ══════════════════════════════════════════════ -->
@@ -1244,6 +1420,106 @@
   </div>
 </div>
 
+<!-- ══ HARVEST ══════════════════════════════════════════════ -->
+<div class="section" id="tab-harvest">
+  <div class="card">
+    <h2>🌾 When to Harvest</h2>
+
+    <div class="info-box blue">
+      Calculates your adjusted harvest date using actual
+      weather stress since planting. Scores each day in
+      the harvest window and alerts you if bad weather
+      is approaching.
+    </div>
+
+    <div class="form-group">
+      <label>Select Farm Profile</label>
+      <select id="harv-profile">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Load Active Crop</label>
+      <select id="harv-active-crop"
+              onchange="fillHarvestFromCrop()">
+        <option value="">— Select from My Crops —</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Crop Name</label>
+      <input type="text" id="harv-crop"
+             placeholder="e.g. Kangkung"/>
+    </div>
+
+    <div class="form-group">
+      <label>Planted Date</label>
+      <input type="date" id="harv-planted"/>
+    </div>
+
+    <div class="form-group">
+      <label>Growth Duration (days)</label>
+      <input type="number" id="harv-duration"
+             value="30" min="7" max="365"/>
+    </div>
+
+    <button class="btn" onclick="getHarvestPrediction()"
+            id="btn-harvest">
+      Predict Harvest Date →
+    </button>
+
+    <div class="status-bar" id="harv-status"></div>
+
+    <!-- Early alert banner -->
+    <div id="harv-alert"></div>
+
+    <!-- Readiness card -->
+    <div id="harv-readiness"></div>
+
+    <!-- Timeline -->
+    <div id="harv-timeline"></div>
+
+    <!-- Stress info -->
+    <div id="harv-stress"></div>
+
+    <!-- Window days -->
+    <div id="harv-window"></div>
+
+    <!-- 30-day calendar -->
+    <div id="harv-calendar"></div>
+  </div>
+</div>
+
+<!-- ══ CRISIS ════════════════════════════════════════════════ -->
+<div class="section" id="tab-crisis">
+  <div class="card">
+    <h2>🚨 Crisis Mode</h2>
+
+    <div class="info-box blue">
+      Monitors the next 6 days of real weather forecast
+      and activates a system-wide alert when extreme
+      conditions are detected. Affects all features
+      when active.
+    </div>
+
+    <div class="form-group">
+      <label>Select Farm Profile</label>
+      <select id="crisis-profile">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+
+    <button class="btn" onclick="checkCrisisStatus()"
+            id="btn-crisis">
+      Check Crisis Status →
+    </button>
+
+    <div class="status-bar" id="crisis-status-bar"></div>
+    <div id="crisis-result"></div>
+  </div>
+</div>
+
 <!-- ══ MY CROPS ══════════════════════════════════════════════ -->
 <div class="section" id="tab-mycrops">
   <div class="card">
@@ -1323,7 +1599,7 @@ function showTab(name) {
 
   const order = [
   'register','login','profile','view','mycrops',
-  'weather','recommend','guide','planting','fertilize','pesticide'
+  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis'
 ];
   const idx   = order.indexOf(name);
   if (idx >= 0) {
@@ -1337,6 +1613,8 @@ function showTab(name) {
   if (name === 'planting')  loadProfilesForPlanting();
   if (name === 'fertilize') loadProfilesForFertilize();
   if (name === 'pesticide') loadProfilesForPesticide();
+  if (name === 'harvest') loadProfilesForHarvest();
+  if (name === 'crisis') loadProfilesForCrisis();
   if (name === 'mycrops') loadMyCrops();
   updateAuthNote();
 }
@@ -1420,6 +1698,14 @@ async function register() {
 
     if (data.success) {
       saveToken(data.token, data.user);
+      const profRes  = await fetch(API + '/api/profile/farms',
+        {headers: hdrs()});
+      const profData = await profRes.json();
+      if (profData.success && profData.data.length > 0) {
+        const def = profData.data.find(p => p.is_default)
+                 || profData.data[0];
+        autoCheckCrisis(def.id);
+      }
       setStatus('reg-status','✅ Account created! Welcome, '+data.user.name+'!','success');
       document.getElementById('reg-token-box').style.display = 'block';
       document.getElementById('reg-token-val').textContent =
@@ -1457,6 +1743,14 @@ async function login() {
 
     if (data.success) {
       saveToken(data.token, data.user);
+      const profRes  = await fetch(API + '/api/profile/farms',
+        {headers: hdrs()});
+      const profData = await profRes.json();
+      if (profData.success && profData.data.length > 0) {
+        const def = profData.data.find(p => p.is_default)
+                 || profData.data[0];
+        autoCheckCrisis(def.id);
+      }
       setStatus('login-status','✅ Welcome back, '+data.user.name+'!','success');
       document.getElementById('login-token-box').style.display = 'block';
       document.getElementById('login-token-val').textContent =
@@ -3373,6 +3667,887 @@ async function getPesticideSchedule() {
   btn.disabled = false;
 }
 
+// ── Load profiles for harvest ─────────────────────────────────
+async function loadProfilesForHarvest() {
+  if (!token) return;
+  try {
+    const res  = await fetch(API + '/api/profile/farms',
+      {headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('harv-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name+' — '+p.land_size
+                        +' '+p.land_size_unit;
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    }
+  } catch(e) {
+    console.error(e);
+  }
+  await loadActiveCropsForHarvest();
+}
+
+// ── Load active crops for harvest ────────────────────────────
+async function loadActiveCropsForHarvest() {
+  try {
+    const res  = await fetch(API + '/api/planting-logs/active',
+      {headers:hdrs()});
+    const data = await res.json();
+    const sel = document.getElementById('harv-active-crop');
+    if (!sel) return;
+    sel.innerHTML =
+      '<option value="">— Select from My Crops —</option>';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(log => {
+        const o = document.createElement('option');
+        o.value = JSON.stringify({
+          crop_name:            log.crop_name,
+          planted_date:         log.planted_date,
+          growth_duration_days: log.growth_duration_days || 30
+        });
+        o.textContent = log.crop_name
+          +' — planted '+log.planted_date
+          +' ('+log.days_since_planted+'d ago)';
+        sel.appendChild(o);
+      });
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ── Fill harvest form from active crop ───────────────────────
+function fillHarvestFromCrop() {
+  const sel = document.getElementById('harv-active-crop');
+  if (!sel || !sel.value) return;
+  try {
+    const data = JSON.parse(sel.value);
+    document.getElementById('harv-crop').value     = data.crop_name;
+    document.getElementById('harv-planted').value  = data.planted_date;
+    document.getElementById('harv-duration').value =
+      data.growth_duration_days || 30;
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ── Get Harvest Prediction ────────────────────────────────────
+async function getHarvestPrediction() {
+  const btn = document.getElementById('btn-harvest');
+  clearStatus('harv-status');
+  document.getElementById('harv-alert').innerHTML     = '';
+  document.getElementById('harv-readiness').innerHTML = '';
+  document.getElementById('harv-timeline').innerHTML  = '';
+  document.getElementById('harv-stress').innerHTML    = '';
+  document.getElementById('harv-window').innerHTML    = '';
+  document.getElementById('harv-calendar').innerHTML  = '';
+
+  if (!token) {
+    setStatus('harv-status','⚠️ Login first','error'); return;
+  }
+
+  const pid      = document.getElementById('harv-profile').value;
+  const crop     = document.getElementById('harv-crop').value.trim();
+  const planted  = document.getElementById('harv-planted').value;
+  const duration = parseInt(
+    document.getElementById('harv-duration').value
+  );
+
+  if (!pid) {
+    setStatus('harv-status','⚠️ Select a profile','error'); return;
+  }
+  if (!crop) {
+    setStatus('harv-status','⚠️ Enter crop name','error'); return;
+  }
+  if (!planted) {
+    setStatus('harv-status','⚠️ Enter planted date','error'); return;
+  }
+  if (!duration || duration < 7) {
+    setStatus('harv-status',
+      '⚠️ Enter valid growth duration (min 7 days)','error');
+    return;
+  }
+
+  btn.disabled = true;
+  setStatus('harv-status',
+    '⏳ Fetching historical weather + calculating harvest date...',
+    'loading');
+
+  try {
+    const res  = await fetch(API + '/api/when-to-harvest',{
+      method:  'POST',
+      headers: hdrs(),
+      body:    JSON.stringify({
+        profile_id:           pid,
+        crop_name:            crop,
+        planted_date:         planted,
+        growth_duration_days: duration,
+        crisis_mode:          false
+      })
+    });
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      setStatus('harv-status',
+        '❌ Invalid response (HTTP ' + res.status + ')',
+        'error');
+      btn.disabled = false;
+      return;
+    }
+
+    if (!res.ok || !data.success) {
+      let detail = data && (data.detail ?? data.message);
+      if (detail != null && typeof detail !== 'string') {
+        try { detail = JSON.stringify(detail); }
+        catch (e2) { detail = String(detail); }
+      }
+      if (!detail) detail = 'HTTP ' + res.status;
+      setStatus('harv-status', '❌ ' + detail, 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    setStatus('harv-status',
+      `✅ Harvest prediction ready for ${crop}`,'success');
+
+    const r = data;
+
+    // ── Early alert banner ──────────────────────────────────
+    if (r.early_alert) {
+      const a = r.early_alert;
+      document.getElementById('harv-alert').innerHTML = `
+        <div class="alert-banner ${a.type.toLowerCase()}">
+          ${a.type === 'CRITICAL' ? '🚨' : '⚠️'}
+          ${a.message}
+          <br/>
+          <span style="font-size:12px;font-weight:normal">
+            Triggered by ${a.trigger_rain}mm rain on
+            ${formatDate(a.trigger_date)}.
+            Suggested harvest: ${formatDate(a.suggested_date)}
+          </span>
+        </div>`;
+    }
+
+    // ── Readiness card ──────────────────────────────────────
+    const rd = r.readiness;
+    document.getElementById('harv-readiness').innerHTML = `
+      <div class="harvest-readiness-card"
+           style="border-color:${rd.color};
+                  background:${rd.color}15;
+                  margin-top:14px">
+        <div style="font-size:28px;margin-bottom:6px">
+          ${rd.status === 'harvest_now'  ? '🌾' :
+            rd.status === 'ready_wait'   ? '⏳' :
+            rd.status === 'not_ready'    ? '🌱' : '🚨'}
+        </div>
+        <div style="font-size:18px;font-weight:bold;
+                    color:${rd.color}">
+          ${rd.label}
+        </div>
+        <div style="font-size:13px;color:#616161;margin-top:4px">
+          ${rd.message}
+        </div>
+      </div>`;
+
+    // ── Timeline ────────────────────────────────────────────
+    document.getElementById('harv-timeline').innerHTML = `
+      <div style="margin-top:16px;font-size:13px;
+                  font-weight:bold;color:#1B5E20;
+                  margin-bottom:8px">
+        📅 Harvest Timeline
+      </div>
+      <div style="background:#F9FBF9;border-radius:10px;
+                  padding:14px;font-size:12px">
+        <div style="display:flex;justify-content:space-between;
+                    padding:6px 0;border-bottom:1px solid #E8F5E9">
+          <span style="color:#757575;font-weight:bold">
+            🌱 Planted
+          </span>
+          <span style="font-weight:bold">
+            ${formatDate(r.planted_date)}
+          </span>
+        </div>
+        <div style="display:flex;justify-content:space-between;
+                    padding:6px 0;border-bottom:1px solid #E8F5E9">
+          <span style="color:#757575;font-weight:bold">
+            📅 Base Harvest
+          </span>
+          <span>${formatDate(r.base_harvest_date)}</span>
+        </div>
+        ${r.stress_delay_days > 0 ? `
+        <div style="display:flex;justify-content:space-between;
+                    padding:6px 0;border-bottom:1px solid #E8F5E9">
+          <span style="color:#E65100;font-weight:bold">
+            ⚠️ Stress Delay
+          </span>
+          <span style="color:#E65100">
+            +${r.stress_delay_days} day(s)
+          </span>
+        </div>` : ''}
+        <div style="display:flex;justify-content:space-between;
+                    padding:6px 0;border-bottom:1px solid #E8F5E9">
+          <span style="color:#2E7D32;font-weight:bold">
+            🌾 Adjusted Harvest
+          </span>
+          <span style="color:#2E7D32;font-weight:bold">
+            ${formatDate(r.adjusted_harvest_date)}
+          </span>
+        </div>
+        <div style="display:flex;justify-content:space-between;
+                    padding:6px 0;border-bottom:1px solid #E8F5E9">
+          <span style="color:#757575;font-weight:bold">
+            📆 Harvest Window
+          </span>
+          <span>
+            ${formatDate(r.harvest_window.start)}
+            – ${formatDate(r.harvest_window.end)}
+          </span>
+        </div>
+        ${r.best_harvest_day ? `
+        <div style="display:flex;justify-content:space-between;
+                    padding:6px 0">
+          <span style="color:#FFD700;font-weight:bold">
+            ⭐ Best Day
+          </span>
+          <span style="color:#2E7D32;font-weight:bold">
+            ${formatDate(r.best_harvest_day.date)}
+            (score ${r.best_harvest_day.score}/100)
+          </span>
+        </div>` : ''}
+      </div>
+      <div style="font-size:12px;color:#757575;
+                  text-align:center;margin-top:6px">
+        ⏰ Best harvest time: ${r.best_harvest_time}
+        — ${r.best_harvest_time_reason}
+      </div>`;
+
+    // ── Stress info ─────────────────────────────────────────
+    if (r.stress_info && r.stress_info.stress_days_count > 0) {
+      const si = r.stress_info;
+      document.getElementById('harv-stress').innerHTML = `
+        <div style="margin-top:14px">
+          <div style="font-size:13px;font-weight:bold;
+                      color:#E65100;margin-bottom:8px">
+            ⚠️ Weather Stress Detected
+          </div>
+          <div style="background:#FFF3E0;border-radius:10px;
+                      padding:12px 14px;font-size:12px">
+            <div style="display:flex;justify-content:space-between;
+                        margin-bottom:6px">
+              <span style="color:#757575">Stress days found</span>
+              <span style="font-weight:bold;color:#E65100">
+                ${si.stress_days_count} day(s)
+              </span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:#757575">Total delay added</span>
+              <span style="font-weight:bold;color:#E65100">
+                +${si.total_delay_days} days
+              </span>
+            </div>
+            ${si.stress_details?.length > 0 ? `
+            <div style="margin-top:8px;border-top:1px solid
+                        #FFE0B2;padding-top:8px">
+              <div style="color:#757575;margin-bottom:4px">
+                Top stress events:
+              </div>
+              ${si.stress_details.map(sd => `
+                <div style="font-size:11px;color:#E65100;
+                            margin-bottom:2px">
+                  Day ${sd.day_index+1}:
+                  ${sd.reasons.join(', ')}
+                </div>`).join('')}
+            </div>` : ''}
+          </div>
+        </div>`;
+    }
+
+    // ── Window days detail ──────────────────────────────────
+    if (r.window_days && r.window_days.length > 0) {
+      let wHtml = `
+        <div style="margin-top:14px">
+          <div style="font-size:13px;font-weight:bold;
+                      color:#1B5E20;margin-bottom:8px">
+            🗓️ Harvest Window Detail
+          </div>`;
+
+      r.window_days.forEach(wd => {
+        const scoreColor =
+          wd.score >= 80 ? '#2E7D32' :
+          wd.score >= 60 ? '#2E7D32' :
+          wd.score >= 40 ? '#E65100' : '#B71C1C';
+
+        const isBest = r.best_harvest_day &&
+                       wd.date === r.best_harvest_day.date;
+
+        wHtml += `
+          <div style="background:${isBest ? '#FFFEF5' : '#F9FBF9'};
+                      border-radius:10px;padding:12px 14px;
+                      margin-bottom:8px;
+                      border:${isBest
+                        ? '2px solid #FFD700'
+                        : '1px solid #E0E0E0'}">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;margin-bottom:6px">
+              <span style="font-weight:bold;font-size:14px">
+                ${isBest ? '⭐ ' : ''}
+                ${formatDate(wd.date)}
+              </span>
+              <span style="font-weight:bold;font-size:15px;
+                           color:${scoreColor}">
+                ${wd.score}/100
+              </span>
+            </div>
+            <div style="background:#E0E0E0;border-radius:4px;
+                        height:6px;margin-bottom:8px">
+              <div style="width:${wd.score}%;height:6px;
+                          border-radius:4px;
+                          background:${scoreColor}">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;
+                        flex-wrap:wrap;font-size:12px;
+                        color:#757575">
+              <span>🌡️ ${wd.weather.temp_max ?? '—'}°C</span>
+              <span>🌧️ ${wd.weather.rainfall_mm ?? '—'}mm</span>
+              <span>💦 ${wd.weather.humidity ?? '—'}%</span>
+              <span>${wd.weather.weather_icon}
+                    ${wd.weather.weather_label}</span>
+            </div>
+            ${isBest ? `
+            <div style="margin-top:6px;font-size:12px;
+                        color:#2E7D32;font-weight:bold">
+              ✅ Best harvest day — ${r.best_harvest_time}
+            </div>` : ''}
+            ${!wd.good ? `
+            <div style="margin-top:4px;font-size:11px;
+                        color:#E65100">
+              ⚠️ Poor conditions — wait if possible
+            </div>` : ''}
+          </div>`;
+      });
+
+      wHtml += '</div>';
+      document.getElementById('harv-window').innerHTML = wHtml;
+    }
+
+    // ── 30-day calendar ─────────────────────────────────────
+    let calHtml = `
+      <div style="margin-top:16px">
+        <div style="font-size:13px;font-weight:bold;
+                    color:#1B5E20;margin-bottom:8px">
+          📅 30-Day Harvest Calendar
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;
+                    font-size:11px;margin-bottom:10px">
+          <span>⭐ Best harvest day</span>
+          <span style="color:#2E7D32">✅ Good window day</span>
+          <span style="color:#E65100">⚠️ Poor window day</span>
+          <span style="color:#B71C1C">❌ After window</span>
+          <span style="color:#9E9E9E">— Before window</span>
+        </div>`;
+
+    r.daily.forEach(d => {
+      const dateObj = new Date(d.date);
+      const dateStr = dateObj.toLocaleDateString('en-MY',{
+        weekday:'short', day:'2-digit', month:'short'
+      });
+
+      const zoneDot = `<span class="zone-dot ${d.zone}"></span>`;
+
+      if (d.in_harvest_window) {
+        const score = d.harvest_score || 0;
+        const good  = score >= 60;
+        const isBest = d.is_best_day;
+        const scoreColor =
+          score >= 80 ? '#2E7D32' :
+          score >= 60 ? '#2E7D32' :
+          score >= 40 ? '#E65100' : '#B71C1C';
+
+        calHtml += `
+          <div class="harvest-day-card in-window
+               ${isBest ? 'best' : !good ? 'poor' : ''}">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center">
+              <span style="font-weight:bold;font-size:13px">
+                ${zoneDot}
+                ${isBest ? '⭐ ' : good ? '✅ ' : '⚠️ '}
+                ${dateStr}
+                <span style="font-size:11px;color:#757575;
+                             margin-left:4px">
+                  Day ${d.day_number}
+                </span>
+              </span>
+              <span style="font-weight:bold;
+                           color:${scoreColor}">
+                ${score}/100
+              </span>
+            </div>
+            <div style="background:#E0E0E0;border-radius:3px;
+                        height:4px;margin-top:5px">
+              <div style="width:${score}%;height:4px;
+                          border-radius:3px;
+                          background:${scoreColor}">
+              </div>
+            </div>
+            ${isBest ? `
+            <div style="font-size:11px;color:#2E7D32;
+                        margin-top:4px;font-weight:bold">
+              ⭐ Best harvest day
+              — ${r.best_harvest_time}
+            </div>` : ''}
+          </div>`;
+
+      } else if (d.after_window) {
+        calHtml += `
+          <div class="harvest-day-card after-window">
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:#B71C1C">
+                ${zoneDot}❌ ${dateStr}
+                <span style="font-size:11px;margin-left:4px">
+                  Day ${d.day_number}
+                </span>
+              </span>
+              <span style="font-size:11px;color:#B71C1C">
+                Past window
+              </span>
+            </div>
+          </div>`;
+
+      } else {
+        // Before window
+        const daysLeft = d.days_to_harvest;
+        calHtml += `
+          <div class="harvest-day-card before-window">
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:#9E9E9E">
+                ${zoneDot}${dateStr}
+                <span style="font-size:11px;margin-left:4px">
+                  Day ${d.day_number}
+                </span>
+              </span>
+              <span style="font-size:11px;color:#9E9E9E">
+                ${daysLeft > 0
+                  ? daysLeft+'d until harvest'
+                  : 'harvest window soon'}
+              </span>
+            </div>
+          </div>`;
+      }
+    });
+
+    calHtml += '</div>';
+    document.getElementById('harv-calendar').innerHTML = calHtml;
+
+  } catch(e) {
+    setStatus('harv-status','❌ Cannot reach server','error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+// ── Load profiles for crisis ──────────────────────────────────
+async function loadProfilesForCrisis() {
+  if (!token) return;
+  try {
+    const res  = await fetch(API + '/api/profile/farms',
+      {headers: hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('crisis-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name+' — '+p.land_size
+                        +' '+p.land_size_unit;
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ── Check Crisis Status ───────────────────────────────────────
+async function checkCrisisStatus() {
+  const btn = document.getElementById('btn-crisis');
+  clearStatus('crisis-status-bar');
+  document.getElementById('crisis-result').innerHTML = '';
+
+  if (!token) {
+    setStatus('crisis-status-bar','⚠️ Login first','error');
+    return;
+  }
+
+  const pid = document.getElementById('crisis-profile').value;
+  if (!pid) {
+    setStatus('crisis-status-bar',
+      '⚠️ Select a profile','error');
+    return;
+  }
+
+  btn.disabled = true;
+  setStatus('crisis-status-bar',
+    '⏳ Fetching weather and calculating risk...','loading');
+
+  try {
+    const res  = await fetch(
+      API + '/api/crisis-status?profile_id=' + encodeURIComponent(pid),
+      {headers: hdrs()}
+    );
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      setStatus('crisis-status-bar',
+        '❌ Invalid response (HTTP ' + res.status + ')',
+        'error');
+      btn.disabled = false;
+      return;
+    }
+
+    if (!res.ok || !data.success) {
+      let detail = data && (data.detail ?? data.message);
+      if (detail != null && typeof detail !== 'string') {
+        try { detail = JSON.stringify(detail); }
+        catch (e2) { detail = String(detail); }
+      }
+      if (!detail) detail = 'HTTP ' + res.status;
+      setStatus('crisis-status-bar', '❌ ' + detail, 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    updateGlobalCrisisBar(data);
+
+    const mode  = data.mode;
+    const score = data.risk_score;
+
+    const modeConfig = {
+      CRISIS: {
+        color:  '#B71C1C',
+        bg:     '#FFEBEE',
+        icon:   '🚨',
+        label:  'CRISIS MODE ACTIVE',
+        status: 'crisis'
+      },
+      WARNING: {
+        color:  '#E65100',
+        bg:     '#FFF3E0',
+        icon:   '⚠️',
+        label:  'WARNING — Monitor Closely',
+        status: 'warning'
+      },
+      NORMAL: {
+        color:  '#2E7D32',
+        bg:     '#E8F5E9',
+        icon:   '✅',
+        label:  'NORMAL — All Clear',
+        status: 'normal'
+      }
+    };
+
+    const cfg = modeConfig[mode] || modeConfig.NORMAL;
+
+    setStatus('crisis-status-bar',
+      `${cfg.icon} ${cfg.label} — Risk Score: ${score}/100`,
+      mode === 'CRISIS'  ? 'error' :
+      mode === 'WARNING' ? 'loading' : 'success');
+
+    let html = '';
+
+    html += `
+      <div style="text-align:center;margin-top:16px">
+        <div class="crisis-score-ring"
+             style="border-color:${cfg.color};
+                    color:${cfg.color}">
+          <span style="font-size:24px;line-height:1">
+            ${score}
+          </span>
+          <span style="font-size:10px;color:#757575">
+            / 100
+          </span>
+        </div>
+        <div style="font-size:18px;font-weight:bold;
+                    color:${cfg.color}">
+          ${cfg.icon} ${cfg.label}
+        </div>
+      </div>`;
+
+    html += `
+      <div class="crisis-banner ${cfg.status}"
+           style="margin-top:14px">
+        <div style="font-size:16px;font-weight:bold;
+                    margin-bottom:6px">
+          ${cfg.icon} ${cfg.label}
+        </div>
+        <div style="font-size:13px;opacity:0.85">
+          Region: ${data.profile.region_name}
+          · Score: ${score}/100
+          · ${data.calculated_at
+              ? new Date(data.calculated_at)
+                  .toLocaleTimeString('en-MY')
+              : ''}
+        </div>
+      </div>`;
+
+    html += `
+      <div style="margin-top:14px">
+        <div style="font-size:13px;font-weight:bold;
+                    color:#1B5E20;margin-bottom:8px">
+          🌦️ Current Conditions
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="day-stat-box">
+            <span class="sv"
+                  style="color:${
+                    data.max_rainfall > 80 ? '#B71C1C' :
+                    data.max_rainfall > 50 ? '#E65100' : '#2E7D32'
+                  }">
+              ${data.max_rainfall}mm
+            </span>
+            <span class="sk">Max Rain</span>
+          </div>
+          <div class="day-stat-box">
+            <span class="sv"
+                  style="color:${
+                    data.avg_temp > 37 ? '#B71C1C' :
+                    data.avg_temp > 35 ? '#E65100' : '#2E7D32'
+                  }">
+              ${data.avg_temp}°C
+            </span>
+            <span class="sk">Avg Temp</span>
+          </div>
+          <div class="day-stat-box">
+            <span class="sv"
+                  style="color:${
+                    data.avg_humidity > 90 ? '#B71C1C' :
+                    data.avg_humidity > 85 ? '#E65100' : '#2E7D32'
+                  }">
+              ${data.avg_humidity}%
+            </span>
+            <span class="sk">Avg Humidity</span>
+          </div>
+          <div class="day-stat-box">
+            <span class="sv">${data.consecutive_rain}</span>
+            <span class="sk">Consec. Rain Days</span>
+          </div>
+        </div>
+      </div>`;
+
+    if (data.triggers && data.triggers.length > 0) {
+      html += `
+        <div style="margin-top:14px">
+          <div style="font-size:13px;font-weight:bold;
+                      color:#B71C1C;margin-bottom:8px">
+            ⚡ What Triggered This
+          </div>
+          ${data.triggers.map(t =>
+            `<div class="trigger-item">→ ${t}</div>`
+          ).join('')}
+        </div>`;
+    }
+
+    if (mode === 'CRISIS') {
+      html += `
+        <div style="margin-top:14px">
+          <div style="font-size:13px;font-weight:bold;
+                      color:#B71C1C;margin-bottom:8px">
+            🔄 What Changes in Crisis Mode
+          </div>
+          <div class="profile-card">
+            <div class="field">
+              <span class="key">🌱 What to Plant</span>
+              <span class="val" style="color:#B71C1C;
+                                       font-size:12px">
+                Survival crops only
+              </span>
+            </div>
+            <div class="field">
+              <span class="key">📅 When to Plant</span>
+              <span class="val" style="color:#B71C1C;
+                                       font-size:12px">
+                Only windows score > 70
+              </span>
+            </div>
+            <div class="field">
+              <span class="key">💊 Fertilize</span>
+              <span class="val" style="color:#B71C1C;
+                                       font-size:12px">
+                All events suspended
+              </span>
+            </div>
+            <div class="field">
+              <span class="key">🧪 Pesticide</span>
+              <span class="val" style="color:#E65100;
+                                       font-size:12px">
+                Heavy rain days removed
+              </span>
+            </div>
+            <div class="field">
+              <span class="key">🌾 Harvest</span>
+              <span class="val" style="color:#B71C1C;
+                                       font-size:12px">
+                Harvest immediately if ready
+              </span>
+            </div>
+          </div>
+        </div>`;
+
+      html += `
+        <div style="margin-top:14px">
+          <div style="font-size:13px;font-weight:bold;
+                      color:#2E7D32;margin-bottom:8px">
+            ✅ Recommended Survival Crops
+          </div>
+          <div>
+            ${(data.crisis_safe_crops || []).map(c =>
+              `<span class="safe-crop-pill">🌱 ${c}</span>`
+            ).join('')}
+          </div>
+        </div>`;
+
+      html += `
+        <div class="info-box" style="margin-top:14px;
+             background:#FFEBEE;color:#B71C1C;
+             border-color:#B71C1C">
+          🚨 <b>Crisis Advice:</b> Protect existing crops
+          immediately. Harvest anything ready now.
+          Avoid planting except survival crops.
+          Do not fertilize — rain washes it away.
+          Monitor crops daily for disease signs.
+        </div>`;
+
+    } else if (mode === 'WARNING') {
+      html += `
+        <div class="info-box" style="margin-top:14px;
+             background:#FFF3E0;color:#E65100;
+             border-color:#E65100">
+          ⚠️ <b>Warning Advice:</b> Conditions are
+          deteriorating. Monitor weather closely.
+          Consider harvesting crops that are near ready.
+          Reduce fertilizing frequency.
+          Crisis mode may activate soon.
+        </div>`;
+
+    } else {
+      html += `
+        <div class="info-box green" style="margin-top:14px">
+          ✅ <b>All Clear:</b> Weather conditions are normal.
+          All features operating in standard mode.
+          Continue your regular farming activities.
+        </div>`;
+    }
+
+    html += `
+      <div style="margin-top:14px">
+        <div style="font-size:13px;font-weight:bold;
+                    color:#1B5E20;margin-bottom:8px">
+          📊 Score Breakdown
+        </div>
+        <div style="background:#F9FBF9;border-radius:10px;
+                    padding:12px 14px;font-size:12px;
+                    color:#616161">
+          <div style="margin-bottom:4px">
+            Rain > 80mm → +40 points
+          </div>
+          <div style="margin-bottom:4px">
+            Rain > 50mm → +25 points
+          </div>
+          <div style="margin-bottom:4px">
+            3+ consecutive rain days → +15 points
+          </div>
+          <div style="margin-bottom:4px">
+            Avg temp > 37°C → +30 points
+          </div>
+          <div style="margin-bottom:4px">
+            Avg temp > 35°C → +20 points
+          </div>
+          <div style="margin-bottom:4px">
+            Avg humidity > 90% → +20 points
+          </div>
+          <div>Avg humidity > 85% → +10 points</div>
+          <div style="margin-top:8px;padding-top:8px;
+                      border-top:1px solid #E0E0E0;
+                      font-weight:bold;color:#424242">
+            >= 60 = CRISIS 🚨 |
+            >= 40 = WARNING ⚠️ |
+            < 40 = NORMAL ✅
+          </div>
+        </div>
+      </div>`;
+
+    document.getElementById('crisis-result').innerHTML = html;
+
+  } catch(e) {
+    setStatus('crisis-status-bar',
+      '❌ Cannot reach server','error');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+// ── Update global crisis banner at top of page ────────────────
+function updateGlobalCrisisBar(data) {
+  const bar = document.getElementById('global-crisis-bar');
+  if (!bar) return;
+
+  if (data.mode === 'CRISIS') {
+    bar.className = 'global-crisis-bar crisis';
+    bar.innerHTML = `🚨 CRISIS MODE ACTIVE — ${data.profile.region_name}
+      Risk Score: ${data.risk_score}/100 —
+      ${(data.triggers && data.triggers[0]) || 'Extreme weather detected'}
+      <span onclick="showTab('crisis')"
+            style="cursor:pointer;text-decoration:underline;
+                   margin-left:8px">
+        View Details →
+      </span>`;
+    document.body.style.paddingTop = '40px';
+  } else if (data.mode === 'WARNING') {
+    bar.className = 'global-crisis-bar warning';
+    bar.innerHTML = `⚠️ WEATHER WARNING — ${data.profile.region_name}
+      Risk Score: ${data.risk_score}/100 —
+      Monitor conditions closely
+      <span onclick="showTab('crisis')"
+            style="cursor:pointer;text-decoration:underline;
+                   margin-left:8px">
+        View Details →
+      </span>`;
+    document.body.style.paddingTop = '40px';
+  } else {
+    bar.className = 'global-crisis-bar';
+    bar.innerHTML = '';
+    document.body.style.paddingTop = '';
+  }
+}
+
+// ── Auto-check crisis on login ────────────────────────────────
+async function autoCheckCrisis(profileId) {
+  if (!token || !profileId) return;
+  try {
+    const res  = await fetch(
+      API + '/api/crisis-status?profile_id=' + encodeURIComponent(profileId),
+      {headers: hdrs()}
+    );
+    const data = await res.json();
+    if (data.success) updateGlobalCrisisBar(data);
+  } catch(e) {
+    // Silent fail — crisis check is non-critical
+  }
+}
+
 function scoreCellClass(score, blocked) {
   if (blocked) return 'blocked';
   if (score >= 80) return 'excellent';
@@ -3953,9 +5128,21 @@ async function deleteCropLog(logId, cropName) {
 
 
 // ── Init ─────────────────────────────────────────────────────────
-window.onload = () => {
+window.onload = async () => {
   updateUserPill();
   updateAuthNote();
+  if (token) {
+    try {
+      const profRes = await fetch(API + '/api/profile/farms',
+        {headers: hdrs()});
+      const profData = await profRes.json();
+      if (profData.success && profData.data.length > 0) {
+        const def = profData.data.find(p => p.is_default)
+                 || profData.data[0];
+        autoCheckCrisis(def.id);
+      }
+    } catch (e) { /* non-critical */ }
+  }
 };
 </script>
 </body>

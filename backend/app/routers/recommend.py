@@ -5,6 +5,7 @@ from datetime import datetime
 from app.services.supabase_client import supabase
 from app.services.weather_service import get_weather
 from app.services.ai_service import get_crop_recommendation
+from app.services.crisis_service import calculate_crisis_mode
 import numpy as np
 
 
@@ -86,6 +87,9 @@ async def recommend(
         if d["zone"] == "accurate"
     ]
 
+    crisis = calculate_crisis_mode(accurate)
+    effective_crisis_mode = crisis["crisis_flag"] or (body.crisis_mode or False)
+
     def avg(lst):
         clean = [v for v in lst if v is not None]
         return round(sum(clean) / len(clean), 1) if clean else 0
@@ -123,7 +127,7 @@ async def recommend(
             profile=profile,
             soil_type=profile.get("soil_type", "Loam"),
             weather_summary=weather_summary,
-            crisis_mode=body.crisis_mode or False
+            crisis_mode=effective_crisis_mode
         )
     except Exception as e:
         raise HTTPException(
@@ -135,6 +139,7 @@ async def recommend(
         "success":         True,
         "profile":         profile,
         "weather_summary": weather_summary,
-        "crisis_mode":     body.crisis_mode,
+        "crisis_mode":     effective_crisis_mode,
+        "crisis_status":   crisis,
         "recommendations": result.get("recommendations", [])
     }

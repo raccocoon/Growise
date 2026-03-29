@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroWise — Harvest Prediction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+
+<style>
+/* ── Reset & base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #f5f3ee;
+  --surface:     #ffffff;
+  --surface-alt: #f9f8f5;
+  --border:      #e4e0d8;
+  --border-soft: #ede9e1;
+  --text:        #1a1814;
+  --text-2:      #6b6560;
+  --text-3:      #a09b94;
+  --green:       #2e7d4f;
+  --green-bg:    #edf7f1;
+  --green-bdr:   #9ed9b9;
+  --teal:        #1a6b6b;
+  --teal-bg:     #edf5f5;
+  --yellow:      #8a6800;
+  --yellow-bg:   #fdf7e3;
+  --orange:      #b85a00;
+  --orange-bg:   #fef3e8;
+  --red:         #c0392b;
+  --red-bg:      #fdf0ee;
+  --red-bdr:     #f5b7b1;
+  --blue:        #1a5276;
+  --blue-bg:     #edf2fa;
+  --blue-bdr:    #a8c7e8;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:   0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  20px;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.page-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+}
+
+/* ── Top bar ──────────────────────────────────────────────────────────────── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0 8px;
+  margin-bottom: 4px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 6px 14px 6px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.back-btn:hover { background: var(--surface-alt); color: var(--text); }
+.back-btn svg { flex-shrink: 0; }
+
+.page-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--text);
+  flex: 1;
+}
+
+/* ── Section label ────────────────────────────────────────────────────────── */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 20px 0 8px;
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card + .card { margin-top: 10px; }
+
+/* ── Status badge ─────────────────────────────────────────────────────────── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ── Key dates row ────────────────────────────────────────────────────────── */
+.dates-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  margin-top: 16px;
+}
+@media (max-width: 420px) {
+  .dates-row { grid-template-columns: 1fr 1fr; }
+  .dates-row .countdown-box { display: none; }
+}
+
+.date-cell {
+  background: var(--surface-alt);
+  border-radius: var(--r-md);
+  padding: 13px 14px;
+  border-left: 3px solid transparent;
+}
+.date-cell .dc-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.date-cell .dc-value {
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: 5px;
+  color: var(--text);
+}
+.date-cell .dc-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.countdown-box {
+  background: var(--surface-alt);
+  border-radius: var(--r-md);
+  padding: 13px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+}
+.countdown-box .cd-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px;
+  line-height: 1;
+}
+.countdown-box .cd-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-3);
+  margin-top: 3px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ── Alert banner ─────────────────────────────────────────────────────────── */
+.alert-banner {
+  display: flex;
+  gap: 12px;
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  border: 1px solid;
+}
+.alert-banner .ab-icon { font-size: 20px; flex-shrink: 0; line-height: 1.3; }
+.alert-banner .ab-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+.alert-banner .ab-body { font-size: 12px; line-height: 1.5; }
+.alert-banner .ab-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 5px;
+}
+.alert-critical { background: var(--red-bg);    border-color: var(--red-bdr);  }
+.alert-critical .ab-title { color: var(--red); }
+.alert-critical .ab-body  { color: #8b2c22; }
+.alert-warning  { background: var(--yellow-bg); border-color: #f0c060; }
+.alert-warning  .ab-title { color: var(--orange); }
+.alert-warning  .ab-body  { color: #7a4f00; }
+.alert-crisis   { background: var(--red-bg);    border-color: var(--red-bdr);  }
+.alert-crisis   .ab-title { color: var(--red); }
+.alert-crisis   .ab-body  { color: #8b2c22; }
+
+/* ── Window bar ───────────────────────────────────────────────────────────── */
+.window-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 4px;
+}
+.window-bar .wb-end {
+  text-align: center;
+  flex: 1;
+}
+.window-bar .wb-end .we-label { font-size: 10px; color: var(--text-3); }
+.window-bar .wb-end .we-date  { font-size: 13px; font-weight: 500; margin-top: 4px; }
+.window-bar .wb-line {
+  flex: 2;
+  height: 1px;
+  background: var(--border);
+  position: relative;
+}
+.window-bar .wb-line-label {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  padding: 0 8px;
+  font-size: 10px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+/* ── Best time pill ───────────────────────────────────────────────────────── */
+.best-time-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--green-bg);
+  border: 1px solid var(--green-bdr);
+  border-radius: var(--r-md);
+  padding: 11px 14px;
+  margin-top: 10px;
+}
+.best-time-pill .btp-icon { font-size: 18px; flex-shrink: 0; }
+.best-time-pill .btp-label { font-size: 11px; color: var(--green); font-weight: 600; }
+.best-time-pill .btp-value { font-size: 14px; color: var(--green); font-weight: 500; margin-top: 1px; }
+
+/* ── Day cards ────────────────────────────────────────────────────────────── */
+.day-card {
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-alt);
+  cursor: pointer;
+  transition: box-shadow .15s, transform .1s;
+  position: relative;
+  margin-top: 8px;
+  user-select: none;
+}
+.day-card:hover { box-shadow: var(--shadow-sm); }
+.day-card.is-best {
+  border: 2px solid var(--score-color, #2e7d4f);
+  background: color-mix(in srgb, var(--score-color, #2e7d4f) 5%, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--score-color, #2e7d4f) 12%, transparent);
+}
+
+.best-chip {
+  position: absolute;
+  top: -1px;
+  right: 14px;
+  background: var(--score-color, #2e7d4f);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 0 0 8px 8px;
+}
+
+.day-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dc-date-wrap .dcd-date    { font-size: 15px; font-weight: 500; }
+.dc-date-wrap .dcd-meta    { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.dc-date-wrap .dcd-zone    { font-weight: 600; }
+
+.dc-score-wrap { text-align: right; }
+.dc-score-wrap .dcs-label  { font-size: 14px; font-weight: 600; }
+.dc-score-wrap .dcs-time   { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+/* Score bar */
+.score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.score-bar-track {
+  flex: 1;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--score-color, #2e7d4f);
+  transition: width .4s cubic-bezier(.4,0,.2,1);
+}
+.score-bar-num {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: right;
+}
+
+.day-card-msg {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 7px;
+  line-height: 1.5;
+}
+
+/* Expand section */
+.conditions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+.cond-item .ci-label { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.cond-item .ci-value { font-size: 13px; font-weight: 500; color: var(--text); margin-top: 2px; }
+
+.expand-hint {
+  font-size: 10px;
+  color: var(--text-3);
+  text-align: right;
+  margin-top: 8px;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 4px;
+  gap: 3px;
+  margin: 16px 0 4px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 9px 8px;
+  border-radius: var(--r-sm);
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-2);
+  font-weight: 400;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.tab-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Stress factors ───────────────────────────────────────────────────────── */
+.stress-factor-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+  margin-top: 8px;
+}
+.sfr-icon { font-size: 18px; flex-shrink: 0; }
+.sfr-label { font-size: 13px; font-weight: 500; }
+.sfr-rule  { font-size: 11px; color: var(--text-3); margin-top: 2px; line-height: 1.4; }
+
+/* ── Timeline ─────────────────────────────────────────────────────────────── */
+.timeline-item {
+  display: flex;
+  gap: 12px;
+}
+.tl-spine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 18px;
+  flex-shrink: 0;
+}
+.tl-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.tl-line {
+  flex: 1;
+  width: 2px;
+  background: var(--border);
+  margin: 4px 0;
+}
+.tl-content { padding-bottom: 14px; }
+.tl-content .tlc-label { font-size: 13px; font-weight: 500; }
+.tl-content .tlc-date  { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+/* ── Confidence ring ──────────────────────────────────────────────────────── */
+.conf-ring-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 12px;
+}
+.conf-ring {
+  position: relative;
+  width: 110px;
+  height: 110px;
+}
+.conf-ring svg { transform: rotate(-90deg); }
+.conf-ring-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.conf-ring-inner .cri-score {
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px;
+  line-height: 1;
+}
+.conf-ring-label {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+.conf-ring-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+
+/* ── Confidence legend ────────────────────────────────────────────────────── */
+.conf-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+}
+.conf-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.conf-legend-text { font-size: 12px; color: var(--text-2); }
+
+/* ── Formula items ────────────────────────────────────────────────────────── */
+.formula-item {
+  background: var(--surface-alt);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.fi-label { font-size: 13px; font-weight: 500; }
+.fi-desc  { font-size: 11px; color: var(--text-3); margin-top: 2px; line-height: 1.45; }
+
+/* ── Skeleton loader ──────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--border-soft) 25%, var(--border) 50%, var(--border-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--r-sm);
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-card { height: 90px; border-radius: var(--r-lg); margin-top: 10px; }
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 40px 24px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  margin-top: 10px;
+}
+.empty-state .es-icon  { font-size: 36px; margin-bottom: 10px; }
+.empty-state .es-title { font-size: 16px; font-weight: 500; }
+.empty-state .es-body  { font-size: 13px; color: var(--text-3); margin-top: 5px; line-height: 1.5; }
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim-in { animation: fadeUp .3s ease forwards; }
+
+/* ── Utility ──────────────────────────────────────────────────────────────── */
+.mt-8  { margin-top: 8px; }
+.mt-10 { margin-top: 10px; }
+.mt-12 { margin-top: 12px; }
+.bold  { font-weight: 600; }
+.muted { color: var(--text-3); }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <a href="calendar.html" class="back-btn">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14">
+        <path d="M9 11L5 7l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Calendar
+    </a>
+    <h1 class="page-title">Harvest</h1>
+  </div>
+
+  <!-- Dynamic content injected here -->
+  <div id="harvest-root"></div>
+
+</div><!-- /page-wrap -->
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIG — change these to pull from your URL params / session storage
+   ═══════════════════════════════════════════════════════════════════════════ */
+const API_BASE   = "/api";             // adjust if your FastAPI runs on a different port
+const AUTH_TOKEN = sessionStorage.getItem("growise_token") || "";
+
+// These can be injected from URL params or your existing session system.
+// Example: const params = new URLSearchParams(location.search);
+//          const PROFILE_ID = params.get("profile_id");
+const PROFILE_ID           = new URLSearchParams(location.search).get("profile_id")  || "";
+const CROP_NAME            = new URLSearchParams(location.search).get("crop_name")   || "";
+const PLANTED_DATE         = new URLSearchParams(location.search).get("planted_date")  || "";   // optional
+const GROWTH_DURATION_DAYS = new URLSearchParams(location.search).get("growth_days") || "";    // optional
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function fmt(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-MY", { weekday:"short", day:"numeric", month:"short" });
+}
+
+function daysAway(iso) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.round((new Date(iso + "T00:00:00") - today) / 86_400_000);
+}
+
+function scoreColor(s) {
+  return s >= 80 ? "#2e7d4f"
+       : s >= 65 ? "#1a6b6b"
+       : s >= 50 ? "#8a6800"
+       : s >= 35 ? "#b85a00"
+                 : "#c0392b";
+}
+
+function scoreLabel(s) {
+  return s >= 80 ? "Excellent"
+       : s >= 65 ? "Good"
+       : s >= 50 ? "Fair"
+       : s >= 35 ? "Poor"
+                 : "Avoid";
+}
+
+function confColor(c) {
+  return { green:"#2e7d4f", teal:"#1a6b6b", yellow:"#8a6800", orange:"#b85a00", grey:"#a09b94" }[c] || "#a09b94";
+}
+
+function zoneStyle(zone) {
+  if (zone === "accurate")  return { bg:"#edf7f1", bdr:"#9ed9b9", txt:"#1e6340", label:"Accurate" };
+  if (zone === "predicted") return { bg:"#edf2fa", bdr:"#a8c7e8", txt:"#1a5276", label:"Predicted" };
+  return                           { bg:"var(--surface-alt)", bdr:"var(--border-soft)", txt:"var(--text-3)", label:"Estimated" };
+}
+
+function readinessCfg(status) {
+  return {
+    harvest_now: { color:"#2e7d4f", bg:"#edf7f1", bdr:"#9ed9b9", icon:"✓", text:"Ready to harvest" },
+    ready_wait:  { color:"#8a6800", bg:"#fdf7e3", bdr:"#e8c840", icon:"◎", text:"Ready — wait for better day" },
+    not_ready:   { color:"#1a5276", bg:"#edf2fa", bdr:"#a8c7e8", icon:"◷", text:"Not ready yet" },
+    overdue:     { color:"#c0392b", bg:"#fdf0ee", bdr:"#f5b7b1", icon:"!", text:"Overdue — harvest now" },
+  }[status] || { color:"#a09b94", bg:"var(--surface-alt)", bdr:"var(--border)", icon:"?", text:"Unknown" };
+}
+
+// Keep track of which day cards are expanded
+const expanded = new Set();
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FETCH
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+async function fetchHarvestData() {
+  const params = new URLSearchParams({ profile_id: PROFILE_ID, crop_name: CROP_NAME });
+  if (PLANTED_DATE)         params.set("planted_date", PLANTED_DATE);
+  if (GROWTH_DURATION_DAYS) params.set("growth_duration_days", GROWTH_DURATION_DAYS);
+
+  const res = await fetch(`${API_BASE}/harvest?${params}`, {
+    headers: { "Authorization": `Bearer ${AUTH_TOKEN}` },
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RENDER — skeleton while loading
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function renderSkeleton() {
+  document.getElementById("harvest-root").innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card mt-10" style="height:56px"></div>
+    <div class="skeleton skeleton-card mt-10" style="height:120px"></div>
+    <div class="skeleton skeleton-card mt-10"></div>
+    <div class="skeleton skeleton-card mt-10"></div>
+  `;
+}
+
+function renderError(msg) {
+  document.getElementById("harvest-root").innerHTML = `
+    <div class="empty-state mt-10">
+      <div class="es-icon">⚠️</div>
+      <p class="es-title">Could not load harvest data</p>
+      <p class="es-body">${msg}</p>
+      <button onclick="init()" style="margin-top:14px;padding:8px 20px;border:1px solid var(--border);background:var(--surface);border-radius:99px;font-family:inherit;font-size:13px;cursor:pointer;color:var(--text-2)">
+        Retry
+      </button>
+    </div>`;
+}
+
+function renderNotPlanted(cropName) {
+  document.getElementById("harvest-root").innerHTML = `
+    <div class="empty-state mt-10">
+      <div class="es-icon">🌱</div>
+      <p class="es-title">No planting date found</p>
+      <p class="es-body">
+        Log your planting date for <strong>${cropName}</strong> to enable harvest predictions and calendar events.
+      </p>
+      <a href="log_crop.html?crop_name=${encodeURIComponent(cropName)}&profile_id=${PROFILE_ID}"
+         style="display:inline-block;margin-top:14px;padding:9px 22px;background:var(--green);color:#fff;border-radius:99px;font-size:13px;font-weight:600;text-decoration:none">
+        Log Planting Date
+      </a>
+    </div>`;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RENDER TABS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+let currentTab = "window";
+let lastData   = null;
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add("active");
+  renderTabContent(lastData);
+}
+
+function toggleDayCard(date) {
+  expanded.has(date) ? expanded.delete(date) : expanded.add(date);
+  renderTabContent(lastData);
+}
+
+
+/* ── Tab: Harvest window ──────────────────────────────────────────────────── */
+
+function renderWindowTab(data) {
+  const { harvest_window, best_harvest_time, harvest_events, best_harvest_day } = data;
+  const w = harvest_window || {};
+
+  const daysHtml = (harvest_events && harvest_events.length)
+    ? harvest_events.map(ev => renderDayCard(ev, best_harvest_day)).join("")
+    : `<div class="empty-state mt-10">
+         <div class="es-icon">🌦️</div>
+         <p class="es-title">No harvest window in forecast</p>
+         <p class="es-body">The 30-day forecast doesn't overlap with your harvest window yet.</p>
+       </div>`;
+
+  return `
+    <!-- Window dates bar -->
+    <div class="card anim-in">
+      <p class="section-label" style="margin-top:0">Harvest window</p>
+      <div class="window-bar">
+        <div class="wb-end">
+          <div class="we-label">Opens</div>
+          <div class="we-date bold">${fmt(w.start)}</div>
+        </div>
+        <div class="wb-line">
+          <span class="wb-line-label">${w.total_days || 8} days</span>
+        </div>
+        <div class="wb-end">
+          <div class="we-label">Closes</div>
+          <div class="we-date bold">${fmt(w.end)}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Best time pill -->
+    <div class="best-time-pill anim-in">
+      <div class="btp-icon">🌅</div>
+      <div>
+        <div class="btp-label">Best time to harvest</div>
+        <div class="btp-value">${best_harvest_time || "6:00 AM – 10:00 AM"}</div>
+      </div>
+    </div>
+
+    <!-- Day cards -->
+    <p class="section-label">Days in window</p>
+    ${daysHtml}
+  `;
+}
+
+function renderDayCard(ev, bestDay) {
+  const isBest = bestDay && ev.date === bestDay.date;
+  const sc     = scoreColor(ev.score);
+  const zs     = zoneStyle(ev.zone);
+  const df     = daysAway(ev.date);
+  const dfStr  = df === 0 ? "Today"
+               : df > 0  ? `In ${df} day${df !== 1 ? "s" : ""}`
+               : `${Math.abs(df)} day${Math.abs(df) !== 1 ? "s" : ""} ago`;
+  const isExp  = expanded.has(ev.date);
+
+  const cond = ev.conditions || {};
+  const condHtml = isExp ? `
+    <div class="conditions-grid">
+      ${[
+        ["Rainfall",   cond.rainfall_mm    != null ? cond.rainfall_mm.toFixed(1)  + " mm"  : "—"],
+        ["Temp max",   cond.temp_max       != null ? cond.temp_max.toFixed(1)     + "°C"   : "—"],
+        ["Humidity",   cond.humidity       != null ? Math.round(cond.humidity)    + "%"    : "—"],
+        ["Rain prob.", cond.rain_probability != null ? cond.rain_probability + "%"         : "—"],
+        ["Weather",    cond.weather_label  || (cond.weather_code != null ? `Code ${cond.weather_code}` : "—")],
+        ["Soil moist.", cond.soil_moisture  != null ? cond.soil_moisture.toFixed(2)       : "—"],
+      ].map(([l,v]) => `
+        <div class="cond-item">
+          <div class="ci-label">${l}</div>
+          <div class="ci-value">${v}</div>
+        </div>`).join("")}
+    </div>` : "";
+
+  return `
+    <div class="day-card ${isBest ? "is-best" : ""} anim-in"
+         style="--score-color:${sc}; border-color:${zs.bdr}; background:${isBest ? "color-mix(in srgb, "+sc+" 5%, white)" : zs.bg}"
+         onclick="toggleDayCard('${ev.date}')">
+      ${isBest ? `<div class="best-chip" style="background:${sc}">Best day</div>` : ""}
+      <div class="day-card-header">
+        <div class="dc-date-wrap">
+          <div class="dcd-date">${fmt(ev.date)}</div>
+          <div class="dcd-meta">
+            ${dfStr} &nbsp;·&nbsp;
+            <span class="dcd-zone" style="color:${zs.txt}">${zs.label}</span>
+          </div>
+        </div>
+        <div class="dc-score-wrap">
+          <div class="dcs-label" style="color:${sc}">${scoreLabel(ev.score)}</div>
+          <div class="dcs-time">${ev.best_harvest_time}</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-track">
+          <div class="score-bar-fill" style="width:${ev.score}%; background:${sc}"></div>
+        </div>
+        <div class="score-bar-num" style="color:${sc}">${ev.score}</div>
+      </div>
+      <div class="day-card-msg">${ev.message || ""}</div>
+      ${condHtml}
+      <div class="expand-hint">${isExp ? "▲ hide conditions" : "▼ show conditions"}</div>
+    </div>`;
+}
+
+
+/* ── Tab: Stress analysis ─────────────────────────────────────────────────── */
+
+function renderStressTab(data) {
+  const delay      = data.stress_delay_days      || 0;
+  const rawDelay   = data.raw_stress_delay_float || 0;
+  const histDays   = data.historical_days_analyzed || 0;
+  const base       = data.base_harvest_date;
+  const adjusted   = data.adjusted_harvest_date;
+  const wStart     = data.harvest_window?.start;
+  const wEnd       = data.harvest_window?.end;
+
+  const delayColor = delay > 5 ? "var(--red)"
+                   : delay > 2 ? "var(--orange)"
+                   : delay > 0 ? "#8a6800"
+                   : "var(--green)";
+
+  const factors = [
+    ["🌡️", "Heat stress",     "Temp >35°C → +0.5d &nbsp;|&nbsp; >33°C → +0.2d per day"],
+    ["💧",  "Waterlogging",   "Soil moisture >0.42 → +0.5d &nbsp;|&nbsp; >0.38 → +0.2d"],
+    ["🏜️", "Drought stress",  "Soil moisture <0.12 → +1.0d &nbsp;|&nbsp; <0.15 → +0.5d"],
+    ["🌊",  "Flood stress",   "Rainfall >80mm → +1.0d &nbsp;|&nbsp; >60mm → +0.5d"],
+  ];
+
+  const timeline = [
+    { dot:"#60a5fa", label:"Crop planted",               date:null,    line:true },
+    { dot:"#94a3b8", label:"Base harvest",                date:base,    line:true },
+    { dot:"var(--orange)", label:`Adjusted (+${delay}d stress)`, date:adjusted, line:true },
+    { dot:"var(--green)", label:"Window opens",           date:wStart,  line:true },
+    { dot:"#94a3b8", label:"Window closes",              date:wEnd,    line:false },
+  ];
+
+  return `
+    <!-- Delay number -->
+    <div class="card anim-in">
+      <p class="section-label" style="margin-top:0">Accumulated stress delay</p>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span style="font-family:'DM Serif Display',serif;font-size:42px;color:${delayColor}">+${delay}</span>
+        <span style="font-size:16px;color:var(--text-2)">day${delay !== 1 ? "s" : ""}</span>
+      </div>
+      <p style="font-size:12px;color:var(--text-3);margin-top:5px">
+        Raw accumulated: ${rawDelay.toFixed(2)} days (rounded to ${delay})
+        &nbsp;·&nbsp; Analyzed ${histDays} days of archive weather since planting
+      </p>
+    </div>
+
+    <!-- Factors -->
+    <div class="card anim-in mt-10">
+      <p class="section-label" style="margin-top:0">Stress factors monitored</p>
+      ${factors.map(([icon, label, rule]) => `
+        <div class="stress-factor-row">
+          <span class="sfr-icon">${icon}</span>
+          <div>
+            <div class="sfr-label">${label}</div>
+            <div class="sfr-rule">${rule}</div>
+          </div>
+        </div>`).join("")}
+      <p style="font-size:11px;color:var(--text-3);margin-top:10px;line-height:1.5">
+        Each stress type compounds independently per day. Delay is summed across all archive days since planting, then rounded to the nearest whole day.
+      </p>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card anim-in mt-10">
+      <p class="section-label" style="margin-top:0">Harvest timeline</p>
+      ${timeline.map(item => `
+        <div class="timeline-item">
+          <div class="tl-spine">
+            <div class="tl-dot" style="background:${item.dot}"></div>
+            ${item.line ? '<div class="tl-line"></div>' : ""}
+          </div>
+          <div class="tl-content">
+            <div class="tlc-label">${item.label}</div>
+            ${item.date ? `<div class="tlc-date">${fmt(item.date)}</div>` : ""}
+          </div>
+        </div>`).join("")}
+    </div>
+  `;
+}
+
+
+/* ── Tab: Confidence ──────────────────────────────────────────────────────── */
+
+function renderConfidenceTab(data) {
+  const conf = data.confidence || { score:0, label:"Indicative", color:"grey" };
+  const cc   = confColor(conf.color);
+  const score = conf.score;
+  const daysUntil = Math.max(0, daysAway(data.adjusted_harvest_date || ""));
+  const delay     = data.stress_delay_days || 0;
+
+  // SVG ring math
+  const R   = 42;
+  const C   = 2 * Math.PI * R;
+  const arc = C - (score / 100) * C;
+
+  const levels = [
+    ["High (≥ 90%)",        "#2e7d4f"],
+    ["Good (≥ 70%)",        "#1a6b6b"],
+    ["Medium (≥ 50%)",      "#8a6800"],
+    ["Low (≥ 30%)",         "#b85a00"],
+    ["Indicative (< 30%)", "#a09b94"],
+  ];
+
+  return `
+    <!-- Ring -->
+    <div class="card anim-in">
+      <div class="conf-ring-wrap">
+        <div class="conf-ring">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="${R}" fill="none" stroke="var(--border)" stroke-width="9"/>
+            <circle cx="55" cy="55" r="${R}" fill="none"
+                    stroke="${cc}" stroke-width="9"
+                    stroke-dasharray="${C}"
+                    stroke-dashoffset="${arc}"
+                    stroke-linecap="round"/>
+          </svg>
+          <div class="conf-ring-inner">
+            <div class="cri-score" style="color:${cc}">${score}%</div>
+          </div>
+        </div>
+        <div class="conf-ring-label" style="color:${cc}">${conf.label} confidence</div>
+        <div class="conf-ring-sub">Harvest prediction accuracy</div>
+      </div>
+    </div>
+
+    <!-- Formula -->
+    <div class="card anim-in mt-10">
+      <p class="section-label" style="margin-top:0">How it's calculated</p>
+
+      <div class="formula-item">
+        <div class="fi-label">Days until harvest</div>
+        <div class="fi-desc">
+          ${daysUntil} days away → base score = max(0, 100 − ${daysUntil} × 2) = <strong>${Math.max(0, 100 - daysUntil * 2)}</strong>
+        </div>
+      </div>
+
+      <div class="formula-item">
+        <div class="fi-label">Stress penalty</div>
+        <div class="fi-desc">
+          ${delay > 3
+            ? `Stress delay = ${delay} days (> 3 threshold) → −10 points applied`
+            : `Stress delay = ${delay} days (≤ 3 threshold) → no penalty applied`}
+        </div>
+      </div>
+
+      <div class="formula-item">
+        <div class="fi-label">Final score</div>
+        <div class="fi-desc">
+          ${delay > 3
+            ? `max(0, ${Math.max(0, 100 - daysUntil * 2)} − 10) = <strong>${score}</strong>`
+            : `<strong>${score}</strong> (no penalty)`}
+        </div>
+      </div>
+
+      <!-- Confidence legend -->
+      <p class="section-label" style="margin-top:14px">Confidence levels</p>
+      ${levels.map(([l,c]) => `
+        <div class="conf-legend-row">
+          <div class="conf-legend-dot" style="background:${c}"></div>
+          <div class="conf-legend-text">${l}</div>
+        </div>`).join("")}
+    </div>
+  `;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN RENDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function renderTabContent(data) {
+  if (!data) return;
+  const el = document.getElementById("tab-content");
+  if (!el) return;
+
+  let html = "";
+  if      (currentTab === "window")     html = renderWindowTab(data);
+  else if (currentTab === "stress")     html = renderStressTab(data);
+  else                                  html = renderConfidenceTab(data);
+
+  el.innerHTML = html;
+}
+
+function render(data) {
+  lastData = data;
+  const cropName   = data.crop_name      || CROP_NAME;
+  const rcfg       = readinessCfg(data.readiness_status);
+  const conf       = data.confidence     || { score: 0, label: "Indicative", color: "grey" };
+  const cc         = confColor(conf.color);
+  const dLeft      = data.adjusted_harvest_date ? daysAway(data.adjusted_harvest_date) : null;
+  const dLeftColor = dLeft === null ? "#a09b94"
+                   : dLeft < 0     ? "var(--red)"
+                   : dLeft <= 5    ? "var(--orange)"
+                   : "var(--green)";
+  const dLeftLabel = dLeft === null ? "" : dLeft < 0 ? "days over" : dLeft === 0 ? "today" : "days away";
+
+  // Alerts HTML
+  let alertsHtml = "";
+  if (data.crisis_mode_active) {
+    alertsHtml += `
+      <div class="alert-banner alert-crisis anim-in">
+        <div class="ab-icon">⚠️</div>
+        <div>
+          <div class="ab-title">Crisis mode active</div>
+          <div class="ab-body">Harvest immediately — do not wait for optimal conditions.</div>
+        </div>
+      </div>`;
+  }
+  if (data.early_harvest_alert) {
+    const al  = data.early_harvest_alert;
+    const cls = al.type === "CRITICAL" ? "alert-critical" : "alert-warning";
+    alertsHtml += `
+      <div class="alert-banner ${cls} anim-in">
+        <div class="ab-icon">${al.type === "CRITICAL" ? "🚨" : "⚠️"}</div>
+        <div>
+          <div class="ab-title">${al.type === "CRITICAL" ? "Critical alert" : "Weather warning"}</div>
+          <div class="ab-body">${al.message}</div>
+          <div class="ab-sub">
+            Trigger: ${al.trigger_rainfall_mm}mm rain on ${fmt(al.trigger_date)} &nbsp;·&nbsp;
+            Suggested harvest: <strong>${fmt(al.suggested_early_harvest_date)}</strong>
+            (${al.days_early} days early)
+          </div>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById("harvest-root").innerHTML = `
+
+    <!-- ── Header card ── -->
+    <div class="card anim-in">
+      <!-- Crop name + confidence -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <p style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px">
+            Harvest prediction
+          </p>
+          <h2 style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:400">
+            ${cropName}
+          </h2>
+          ${data.region ? `<p style="font-size:12px;color:var(--text-3);margin-top:2px">${data.region}, Sarawak</p>` : ""}
+        </div>
+        <!-- Confidence pill -->
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="width:60px;height:4px;border-radius:99px;background:var(--border);overflow:hidden">
+              <div style="height:100%;width:${conf.score}%;background:${cc};border-radius:99px;transition:width .5s"></div>
+            </div>
+            <span style="font-size:11px;font-weight:600;color:${cc}">${conf.label}</span>
+          </div>
+          <span style="font-size:10px;color:var(--text-3)">${conf.score}% accuracy</span>
+        </div>
+      </div>
+
+      <!-- Readiness badge + message -->
+      <div style="margin-top:14px">
+        <div class="status-badge" style="background:${rcfg.bg};border:1.5px solid ${rcfg.bdr};color:${rcfg.color}">
+          <span>${rcfg.icon}</span>
+          <span>${rcfg.text}</span>
+        </div>
+        <p style="font-size:13px;color:var(--text-2);margin-top:9px;line-height:1.5">
+          ${data.readiness_message || ""}
+        </p>
+      </div>
+
+      <!-- Key dates row -->
+      <div class="dates-row">
+        <div class="date-cell" style="border-left-color:#60a5fa">
+          <div class="dc-label">Base harvest</div>
+          <div class="dc-value">${fmt(data.base_harvest_date)}</div>
+          <div class="dc-sub">Without stress</div>
+        </div>
+        <div class="date-cell" style="border-left-color:var(--orange)">
+          <div class="dc-label">Adjusted harvest</div>
+          <div class="dc-value">${fmt(data.adjusted_harvest_date)}</div>
+          <div class="dc-sub" style="color:${data.stress_delay_days > 0 ? "var(--orange)" : "var(--green)"}">
+            ${data.stress_delay_days > 0
+              ? `+${data.stress_delay_days} day${data.stress_delay_days !== 1 ? "s" : ""} stress`
+              : "On schedule"}
+          </div>
+        </div>
+        ${dLeft !== null ? `
+        <div class="countdown-box">
+          <div class="cd-num" style="color:${dLeftColor}">${Math.abs(dLeft)}</div>
+          <div class="cd-label">${dLeftLabel}</div>
+        </div>` : ""}
+      </div>
+    </div>
+
+    <!-- ── Alerts ── -->
+    ${alertsHtml}
+
+    <!-- ── Tabs ── -->
+    <div class="tab-bar anim-in">
+      <button class="tab-btn ${currentTab === "window"     ? "active" : ""}" data-tab="window"     onclick="switchTab('window')">Harvest window</button>
+      <button class="tab-btn ${currentTab === "stress"     ? "active" : ""}" data-tab="stress"     onclick="switchTab('stress')">Stress analysis</button>
+      <button class="tab-btn ${currentTab === "confidence" ? "active" : ""}" data-tab="confidence" onclick="switchTab('confidence')">Confidence</button>
+    </div>
+
+    <!-- ── Tab content ── -->
+    <div id="tab-content"></div>
+  `;
+
+  renderTabContent(data);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+async function init() {
+  if (!PROFILE_ID || !CROP_NAME) {
+    renderError("Missing profile_id or crop_name in URL. "
+      + "Expected: harvest.html?profile_id=...&crop_name=...");
+    return;
+  }
+
+  renderSkeleton();
+
+  try {
+    const data = await fetchHarvestData();
+
+    if (data.status === "not_planted") {
+      renderNotPlanted(CROP_NAME);
+      return;
+    }
+
+    render(data);
+  } catch (err) {
+    renderError(err.message);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ from typing import Optional
 from app.services.supabase_client import supabase
 from app.services.weather_service import get_weather
 from app.services.fertilize_service import get_fertilize_events
+from app.services.crisis_service import calculate_crisis_mode
 import numpy as np
 
 router = APIRouter(prefix="/api", tags=["Fertilize"])
@@ -79,6 +80,13 @@ async def when_to_fertilize(
             detail=f"Weather failed: {str(e)}"
         )
 
+    accurate_days = [
+        d for d in weather_data["weather_array"]
+        if d["zone"] == "accurate"
+    ]
+    crisis = calculate_crisis_mode(accurate_days)
+    effective_crisis_mode = crisis["crisis_flag"] or (body.crisis_mode or False)
+
     # Get fertilize events
     result = get_fertilize_events(
         forecast_30days = weather_data["weather_array"],
@@ -86,7 +94,7 @@ async def when_to_fertilize(
         crop_name       = body.crop_name,
         land_size       = profile.get("land_size", 100),
         land_size_unit  = profile.get("land_size_unit", "sqft"),
-        crisis_mode     = body.crisis_mode or False
+        crisis_mode     = effective_crisis_mode
     )
 
     if "error" in result:
@@ -103,6 +111,7 @@ async def when_to_fertilize(
         "profile":      profile,
         "crop_name":    body.crop_name,
         "planted_date": body.planted_date,
-        "crisis_mode":  body.crisis_mode,
+        "crisis_mode":  effective_crisis_mode,
+        "crisis_status": crisis,
         **result
     }

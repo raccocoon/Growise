@@ -5,6 +5,19 @@ from app.services.supabase_client import supabase
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 
+def get_user(authorization: str) -> str:
+    """Extract user_id from Bearer token."""
+    try:
+        token = authorization.replace("Bearer ", "")
+        user = supabase.auth.get_user(token)
+        return user.user.id
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+
 class RegisterRequest(BaseModel):
     email:            str
     password:         str
@@ -99,7 +112,7 @@ async def login(body: LoginRequest):
 @router.get("/me")
 async def get_me(authorization: str = Header(...)):
     try:
-        token     = authorization.replace("Bearer ", "")
+        token = authorization.replace("Bearer ", "")
         auth_user = supabase.auth.get_user(token)
 
         user_data = supabase.table("users") \
@@ -110,7 +123,7 @@ async def get_me(authorization: str = Header(...)):
         if not user_data.data:
             raise HTTPException(status_code=404, detail="User not found")
 
-        return { "success": True, "data": user_data.data[0] }
+        return {"success": True, "data": user_data.data[0]}
 
     except HTTPException:
         raise

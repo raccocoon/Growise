@@ -1,13 +1,32 @@
-from datetime import datetime
+"""
+Feature 7 — When to Pesticide (Calendar Engine C)
+Generates pesticide spray schedule with risk detection and spray window validation.
+"""
+from datetime import datetime, timedelta
 from collections import Counter
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 def get_pesticide_events(
     forecast_30days: List[dict],
     planted_date: str,
     farming_method: str = "conventional",
+    crisis_mode: bool = False,
 ) -> Dict[str, Any]:
+    """
+    Generate pesticide calendar events with risk detection and spray window validation.
+    
+    Args:
+        forecast_30days: 30-day weather array from weather service
+        planted_date: Date crop was planted (YYYY-MM-DD)
+        farming_method: "conventional" or "organic"
+        crisis_mode: If True, suspend spraying during heavy rain (>10mm)
+    
+    Returns:
+        Dict with events, daily tracking, and summary
+    """
+    
+    # Validate inputs
     if planted_date is None or (isinstance(planted_date, str) and not planted_date.strip()):
         return {
             "events": [],
@@ -80,6 +99,7 @@ def get_pesticide_events(
             "days_since_planting": days_since,
         }
 
+        # Skip if too early (seedling stage)
         if days_since < 7:
             msg = "Seedling stage — too early to spray pesticide."
             daily.append(
@@ -93,11 +113,14 @@ def get_pesticide_events(
             )
             continue
 
+        # Extract weather data
         humidity = day.get("humidity") or 0
         rain_prob = day.get("rain_probability") or 0
         temp_max = day.get("temp_max") or 0
         wind_kmh = day.get("wind_kmh") or 0
+        rainfall = day.get("rainfall_mm") or 0
 
+        # Calculate risks
         if humidity > 80 and rain_prob > 50:
             fungal_risk = "HIGH"
         elif humidity > 70 and rain_prob > 30:
@@ -129,6 +152,7 @@ def get_pesticide_events(
         else:
             dominant_type = "insect"
 
+        # Skip if no risk
         if overall_risk == "LOW":
             daily.append(
                 {
@@ -145,9 +169,11 @@ def get_pesticide_events(
             )
             continue
 
+        # Track elevated risks for summary
         dominant_types_elevated.append(dominant_type)
         severities_elevated.append(overall_risk)
 
+        # Spray window conditions
         rain_ok = rain_prob < 50
         wind_ok = wind_kmh < 15
         temp_ok = 22 <= temp_max <= 34
@@ -167,12 +193,24 @@ def get_pesticide_events(
                 f"Temperature {temp_max}°C outside safe range 22-34°C"
             )
 
-        if spray_window_ok:
-            status = "spray"
-            has_event = True
-        else:
-            status = "delay"
-            has_event = False
+        # Crisis mode filter - skip spraying on heavy rain days
+        if crisis_mode and rainfall > 10:
+            daily.append({
+                **base,
+                "fungal_risk": fungal_risk,
+                "mite_risk": mite_risk,
+                "insect_risk": insect_risk,
+                "overall_risk": overall_risk,
+                "dominant_type": dominant_type,
+                "status": "crisis_skip",
+                "reason": "Crisis mode active — spraying suspended during heavy rain",
+                "has_event": False,
+                "message": f"Crisis mode active — heavy rain ({rainfall}mm) makes spraying unsafe",
+                "spray_window_ok": False,
+                "failed_conditions": ["Crisis mode: heavy rain >10mm"],
+                "product_advice": product_advice(dominant_type),
+            })
+            continue
 
         product = product_advice(dominant_type)
         if temp_max > 30:
@@ -180,9 +218,8 @@ def get_pesticide_events(
         else:
             best_spray_time = "6:00 AM – 8:00 AM or 4:00 PM – 6:00 PM"
 
-        if status == "spray":
-            # ADD 2: Check cooldown before final spray recommendation
-            # ADD 3: If multiple risks exist, use shortest cooldown among them
+        # Check cooldown periods
+        if spray_window_ok:
             # Get all elevated risks for this day
             elevated_risks = []
             if fungal_risk in ["HIGH", "MEDIUM"]:
@@ -217,11 +254,15 @@ def get_pesticide_events(
                 )
                 failed_conditions = [f"Cooldown period active for: {', '.join(cooldown_details)}"]
             else:
-                # Cooldown passed, allow spray and update last spray dates for all elevated risks
+                # Cooldown passed, allow spray and update last spray dates
                 for risk_type in elevated_risks:
                     last_spray_dates[risk_type] = day_date
+                status = "spray"
+                has_event = True
                 message = f"Spray {product}. Best time: {best_spray_time}."
         else:
+            status = "delay"
+            has_event = False
             issues = ", ".join(failed_conditions)
             message = (
                 f"Risk detected ({dominant_type}) but conditions not safe. "
@@ -252,6 +293,7 @@ def get_pesticide_events(
                 "rain_probability": rain_prob,
                 "temp_max": temp_max,
                 "wind_kmh": wind_kmh,
+                "rainfall_mm": rainfall,
             },
             "message": message,
         }
@@ -260,10 +302,13 @@ def get_pesticide_events(
         if has_event:
             events.append(event)
 
+    # Calculate summary statistics
     total_spray = sum(1 for d in daily if d.get("status") == "spray")
     delay_days = sum(1 for d in daily if d.get("status") == "delay")
     cooldown_skip_days = sum(1 for d in daily if d.get("status") == "cooldown_skip")
+    crisis_skip_days = sum(1 for d in daily if d.get("status") == "crisis_skip")
     no_spray_days = sum(1 for d in daily if d.get("status") == "no_spray")
+    too_early_days = sum(1 for d in daily if d.get("status") == "too_early")
 
     next_ev = next((e for e in events if e.get("has_event")), None)
 
@@ -279,6 +324,12 @@ def get_pesticide_events(
     if total_spray > 0:
         monthly_situation = "spray_available"
         monthly_message = f"{total_spray} spray window(s) found. Next spray: {next_ev['date'] if next_ev else 'None'}."
+    elif crisis_skip_days > 0 and total_spray == 0:
+        monthly_situation = "crisis_no_spray"
+        monthly_message = (
+            f"Crisis mode active — {crisis_skip_days} spray opportunity(ies) skipped due to heavy rain. "
+            "Wait for conditions to improve."
+        )
     elif delay_days > 0 and total_spray == 0:
         # Find most common failed condition from all delay days
         all_failed_conditions = []
@@ -298,7 +349,7 @@ def get_pesticide_events(
             f"Pest risk detected but {cooldown_skip_days} spray opportunity(ies) skipped due to "
             "protection period. Risk management active - monitor crops closely."
         )
-    elif all(d.get("status") == "too_early" for d in daily):
+    elif all(d.get("status") == "too_early" for d in daily[:7] if d):
         first_window_date = (planted + timedelta(days=7)).strftime("%d %b %Y")
         monthly_situation = "too_early"
         monthly_message = (
@@ -339,12 +390,15 @@ def get_pesticide_events(
         "total_spray_days": total_spray,
         "delay_days": delay_days,
         "cooldown_skip_days": cooldown_skip_days,
+        "crisis_skip_days": crisis_skip_days,
         "no_spray_days": no_spray_days,
+        "too_early_days": too_early_days,
         "next_spray_date": next_ev["date"] if next_ev else None,
         "next_product_advice": next_ev["product_advice"] if next_ev else None,
         "dominant_risk_type": dominant_risk_type,
         "dominant_risk_level": dominant_risk_level,
         "farming_method": fm,
+        "crisis_mode": crisis_mode,
         "monthly_situation": monthly_situation,
         "monthly_message": monthly_message,
         "what_to_watch": what_to_watch,
