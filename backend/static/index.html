@@ -991,7 +991,101 @@
   background: #2E7D32;
   transition: width 0.3s;
 }
+
+
+/* ── Land Analysis Map ── */
+
+#land-map {
+  width: 100%;
+  height: 500px;
+  border-radius: 12px;
+  border: 2px solid #E0E0E0;
+  margin: 12px 0;
+}
+.layer-toggles {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.layer-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid #1565C0;
+  background: white;
+  color: #1565C0;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 12px;
+  transition: all .2s;
+}
+.layer-btn.active {
+  background: #1565C0;
+  color: white;
+}
+.layer-btn:hover:not(.active) {
+  background: #E3F2FD;
+}
+.land-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.land-stat-card {
+  background: #F9FBE7;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #E0E0E0;
+}
+.land-stat-card h4 {
+  margin: 0 0 8px 0;
+  color: #1B5E20;
+  font-size: 14px;
+}
+.land-stat-card .stat-value {
+  font-size: 22px;
+  font-weight: bold;
+  color: #2E7D32;
+}
+.land-stat-card .stat-label {
+  font-size: 11px;
+  color: #757575;
+  margin-top: 4px;
+}
+.land-stat-card .stat-range {
+  font-size: 12px;
+  color: #616161;
+  margin-top: 6px;
+}
+.land-stat-card .stat-desc {
+  font-size: 11px;
+  color: #9E9E9E;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+.date-range-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.date-range-row input[type="date"] {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+}
+.date-range-row label {
+  font-size: 13px;
+  font-weight: bold;
+  color: #424242;
+}
+
   </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 </head>
 <body>
 
@@ -1022,6 +1116,7 @@
     <div class="tab" onclick="showTab('pesticide')">🧪 Pesticide</div>
     <div class="tab" onclick="showTab('harvest')">🌾 Harvest</div>
     <div class="tab" onclick="showTab('crisis')">🚨 Crisis</div>
+    <div class="tab" onclick="showTab('landanalysis')">🛰️ Land Analysis</div>
   </div>
 
   <!-- ══ REGISTER ══════════════════════════════════════════════ -->
@@ -1536,6 +1631,48 @@
   </div>
 </div>
 
+<!-- ══ LAND ANALYSIS TAB ═══════════════════════════════════ -->
+<div class="section" id="tab-landanalysis">
+  <div class="card">
+    <h2>🛰️ Farm Land Analysis</h2>
+    <div class="info-box blue">
+      Draw a polygon on the map to analyze your farmland using satellite data from Google Earth Engine.
+      Get insights on evapotranspiration, elevation, wind speed, and rainfall.
+    </div>
+
+    <div class="date-range-row">
+      <label>From:</label>
+      <input type="date" id="gee-start-date"/>
+      <label>To:</label>
+      <input type="date" id="gee-end-date"/>
+      <button class="btn" onclick="analyzeDrawnPolygon()" id="btn-analyze-land" disabled
+              style="padding:8px 16px;font-size:13px">
+        Analyze Polygon →
+      </button>
+      <button class="btn" onclick="clearPolygon()"
+              style="padding:8px 16px;font-size:13px;background:#ef5350">
+        Clear
+      </button>
+    </div>
+
+    <div id="land-map"></div>
+
+    <div class="layer-toggles" id="layer-toggles" style="display:none">
+      <button class="layer-btn active" onclick="toggleLayer('evapotranspiration',this)">💧 Evapotranspiration</button>
+      <button class="layer-btn active" onclick="toggleLayer('elevation',this)">⛰️ Elevation</button>
+      <button class="layer-btn active" onclick="toggleLayer('wind_speed',this)">💨 Wind Speed</button>
+      <button class="layer-btn active" onclick="toggleLayer('rainfall',this)">🌧️ Rainfall</button>
+      <button class="layer-btn active" onclick="toggleLayer('ndvi',this)">🌿 NDVI</button>
+      <button class="layer-btn active" onclick="toggleLayer('soil_moisture',this)">🟤 Soil Moisture</button>
+      <button class="layer-btn active" onclick="toggleLayer('land_surface_temp',this)">🌡️ Temperature</button>
+      <button class="layer-btn active" onclick="toggleLayer('ndwi',this)">🌊 Water Index</button>
+    </div>
+
+    <div class="status-bar" id="land-status"></div>
+    <div class="land-stats-grid" id="land-stats" style="display:none"></div>
+  </div>
+</div>
+
 <!-- ══ START GROWING MODAL ══════════════════════════════════ -->
 <div class="modal-overlay" id="start-growing-modal"
      style="display:none">
@@ -1599,7 +1736,7 @@ function showTab(name) {
 
   const order = [
   'register','login','profile','view','mycrops',
-  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis'
+  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis','landanalysis'
 ];
   const idx   = order.indexOf(name);
   if (idx >= 0) {
@@ -5142,6 +5279,242 @@ window.onload = async () => {
         autoCheckCrisis(def.id);
       }
     } catch (e) { /* non-critical */ }
+  }
+};
+</script>
+
+<!-- Leaflet & Draw Plugin -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<script>
+// ── Land Analysis (GEE) ────────────────────────────────────
+
+let landMap = null;
+let drawnItems = null;
+let geeLayers = {};
+let drawnPolygonCoords = null;
+
+function initLandMap() {
+  if (landMap) return;
+
+  // Default center: Sarawak
+  landMap = L.map('land-map').setView([2.5, 111.0], 8);
+
+  L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0','mt1','mt2','mt3'],
+    attribution: '&copy; Google'
+  }).addTo(landMap);
+
+  drawnItems = new L.FeatureGroup();
+  landMap.addLayer(drawnItems);
+
+  const drawControl = new L.Control.Draw({
+    draw: {
+      polygon: {
+        allowIntersection: false,
+        shapeOptions: { color: '#d32f2f', weight: 2, fillColor: '#d32f2f', fillOpacity: 0.20 }
+      },
+      polyline: false,
+      rectangle: {
+        shapeOptions: { color: '#d32f2f', weight: 2, fillColor: '#d32f2f', fillOpacity: 0.20 }
+      },
+      circle: false, marker: false, circlemarker: false
+    },
+    edit: { featureGroup: drawnItems }
+  });
+  landMap.addControl(drawControl);
+
+  landMap.on(L.Draw.Event.CREATED, function (e) {
+    drawnItems.clearLayers();
+    clearGEELayers();
+    e.layer.setStyle({ color: '#d32f2f', weight: 2, fillColor: '#d32f2f', fillOpacity: 0.20 });
+    drawnItems.addLayer(e.layer);
+
+    const latlngs = e.layer.getLatLngs()[0];
+    drawnPolygonCoords = latlngs.map(ll => [ll.lng, ll.lat]);
+    // Close the polygon
+    drawnPolygonCoords.push(drawnPolygonCoords[0]);
+
+    document.getElementById('btn-analyze-land').disabled = false;
+    document.getElementById('land-status').textContent =
+      'Polygon drawn with ' + latlngs.length + ' points. Click "Analyze Polygon" to proceed.';
+    document.getElementById('land-status').className = 'status-bar info';
+  });
+
+  landMap.on(L.Draw.Event.DELETED, function () {
+    drawnPolygonCoords = null;
+    document.getElementById('btn-analyze-land').disabled = true;
+    clearGEELayers();
+  });
+
+  // Set default dates (last 30 days)
+  const today = new Date();
+  const thirtyAgo = new Date(today);
+  thirtyAgo.setDate(today.getDate() - 30);
+  document.getElementById('gee-end-date').value = today.toISOString().split('T')[0];
+  document.getElementById('gee-start-date').value = thirtyAgo.toISOString().split('T')[0];
+}
+
+function clearPolygon() {
+  if (drawnItems) drawnItems.clearLayers();
+  drawnPolygonCoords = null;
+  document.getElementById('btn-analyze-land').disabled = true;
+  document.getElementById('land-status').textContent = '';
+  document.getElementById('land-stats').style.display = 'none';
+  document.getElementById('layer-toggles').style.display = 'none';
+  clearGEELayers();
+}
+
+function clearGEELayers() {
+  Object.values(geeLayers).forEach(layer => {
+    if (landMap.hasLayer(layer)) landMap.removeLayer(layer);
+  });
+  geeLayers = {};
+}
+
+async function analyzeDrawnPolygon() {
+  if (!drawnPolygonCoords) return;
+
+  const statusEl = document.getElementById('land-status');
+  const statsEl = document.getElementById('land-stats');
+  const btn = document.getElementById('btn-analyze-land');
+
+  statusEl.textContent = 'Analyzing polygon with Google Earth Engine... This may take 15-30 seconds.';
+  statusEl.className = 'status-bar info';
+  statsEl.style.display = 'none';
+  btn.disabled = true;
+
+  try {
+    const body = {
+      coordinates: drawnPolygonCoords,
+      start_date: document.getElementById('gee-start-date').value || null,
+      end_date: document.getElementById('gee-end-date').value || null
+    };
+
+    const res = await fetch(API + '/api/land-analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Analysis failed');
+    }
+
+    const json = await res.json();
+    const data = json.data;
+
+    statusEl.textContent = 'Analysis complete! Toggle layers on the map below.';
+    statusEl.className = 'status-bar success';
+
+    // Clear old layers
+    clearGEELayers();
+
+    // Add tile layers for each metric
+    const layerKeys = ['evapotranspiration', 'elevation', 'wind_speed', 'rainfall', 'ndvi', 'soil_moisture', 'land_surface_temp', 'ndwi'];
+    layerKeys.forEach(key => {
+      if (data[key] && data[key].tile_url) {
+        const tileLayer = L.tileLayer(data[key].tile_url, {
+          maxZoom: 20, opacity: 0.7
+        });
+        // Don't add to map by default — user toggles them one at a time
+        geeLayers[key] = tileLayer;
+      }
+    });
+
+    document.getElementById('layer-toggles').style.display = 'flex';
+    // All buttons start as inactive (no layers shown)
+    document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+
+    // Build stats cards
+    const cardConfig = {
+      evapotranspiration: { icon: '💧', name: 'Evapotranspiration', bg: '#F9FBE7',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>` },
+      elevation: { icon: '⛰️', name: 'Elevation', bg: '#FFF3E0',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min}m | Max: ${s.max}m | Slope: ${s.slope_mean}°</div>` },
+      wind_speed: { icon: '💨', name: 'Wind Speed', bg: '#E3F2FD',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>` },
+      rainfall: { icon: '🌧️', name: 'Rainfall', bg: '#E8EAF6',
+        render: s => `<div class="stat-value">${s.total} <span style="font-size:13px">${s.unit} total</span></div>
+                       <div class="stat-range">Daily avg: ${s.daily_avg}mm | Min: ${s.min}mm | Max: ${s.max}mm</div>` },
+      ndvi: { icon: '🌿', name: 'Vegetation Health (NDVI)', bg: '#E8F5E9',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>
+                       <div style="margin-top:6px;padding:4px 8px;background:#C8E6C9;border-radius:6px;font-size:12px;font-weight:bold">${s.health}</div>` },
+      soil_moisture: { icon: '🟤', name: 'Soil Moisture', bg: '#EFEBE9',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>
+                       <div style="margin-top:6px;padding:4px 8px;background:#D7CCC8;border-radius:6px;font-size:12px;font-weight:bold">${s.status}</div>` },
+      land_surface_temp: { icon: '🌡️', name: 'Land Surface Temperature', bg: '#FBE9E7',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min}°C | Max: ${s.max}°C</div>` },
+      ndwi: { icon: '🌊', name: 'Water / Flood Index (NDWI)', bg: '#E0F7FA',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>
+                       <div style="margin-top:6px;padding:4px 8px;background:#B2EBF2;border-radius:6px;font-size:12px;font-weight:bold">${s.status}</div>` }
+    };
+
+    let html = '';
+    layerKeys.forEach(key => {
+      const cfg = cardConfig[key];
+      if (!cfg) return;
+      if (data[key] && !data[key].error) {
+        html += `<div class="land-stat-card" style="background:${cfg.bg}">
+          <h4>${cfg.icon} ${cfg.name}</h4>
+          ${cfg.render(data[key].stats)}
+          <div class="stat-desc">${data[key].description}</div>
+        </div>`;
+      } else if (data[key] && data[key].error) {
+        html += `<div class="land-stat-card" style="background:#FFEBEE;border-color:#EF9A9A">
+          <h4>${cfg.icon} ${cfg.name}</h4>
+          <div style="color:#C62828;font-size:13px">${data[key].error}</div>
+        </div>`;
+      }
+    });
+
+    statsEl.innerHTML = html;
+    statsEl.style.display = 'grid';
+
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'status-bar error';
+  } finally {
+    btn.disabled = !drawnPolygonCoords;
+  }
+}
+
+function toggleLayer(key, btn) {
+  if (!geeLayers[key]) return;
+  const wasActive = btn.classList.contains('active');
+
+  // Remove all layers and deactivate all buttons
+  Object.values(geeLayers).forEach(layer => {
+    if (landMap.hasLayer(layer)) landMap.removeLayer(layer);
+  });
+  document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+
+  // If it wasn't active, show this one layer
+  if (!wasActive) {
+    landMap.addLayer(geeLayers[key]);
+    btn.classList.add('active');
+  }
+}
+
+// Initialize map when tab is shown
+const origShowTab = showTab;
+showTab = function(name) {
+  origShowTab(name);
+  if (name === 'landanalysis') {
+    setTimeout(() => {
+      initLandMap();
+      landMap.invalidateSize();
+    }, 100);
   }
 };
 </script>
