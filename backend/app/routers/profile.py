@@ -92,7 +92,7 @@ async def create_farm(
     lng = reg["lng"]
 
     # Auto detect soil type
-    soil = await get_soil_type(lat, lng)
+    soil = get_soil_type(lat, lng)
 
     # Check if this is the first profile (auto set default)
     existing = supabase.table("farm_profiles") \

@@ -32,4 +32,7 @@ app.include_router(pesticide.router)
 app.include_router(harvest.router)
 app.include_router(crisis.router)
 
+from app.routers import map as map_router
+app.include_router(map_router.router)
+
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

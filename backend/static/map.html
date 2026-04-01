@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GroWise Map Analysis</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --panel-bg: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --safe: #22c55e;
+    }
+    
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Layout */
+    #map {
+      width: 60%;
+      height: 100%;
+    }
+    
+    #panel {
+      width: 40%;
+      height: 100%;
+      background: var(--panel-bg);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    #panel-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(30, 41, 59, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    #panel-header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    #panel-header p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    #panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    /* States */
+    .state-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    
+    .state-loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      width: 40px;
+      height: 40px;
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 16px;
+    }
+    
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    
+    .state-results {
+      display: none;
+    }
+    
+    /* Result Components */
+    .section {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .section h3 {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .stat-box {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 12px;
+      border-radius: 6px;
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+    
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .badge-safe { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #4ade80; }
+    .badge-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #fbbf24; }
+    .badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #f87171; }
+    
+    /* Crisis Banner */
+    #crisis-banner {
+      display: none;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 500;
+      text-align: center;
+    }
+    
+    /* Crop Cards */
+    .crop-card {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .crop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .crop-title {
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
+    
+    .crop-subtitle {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    .crop-reason {
+      font-size: 0.875rem;
+      margin-top: 8px;
+      line-height: 1.4;
+      color: #cbd5e1;
+    }
+    
+    .error-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--danger);
+      padding: 16px;
+      border-radius: 8px;
+      color: #fca5a5;
+      text-align: center;
+      display: none;
+      margin-top: 20px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      #map { width: 100%; height: 50%; }
+      #panel { width: 100%; height: 50%; border-left: none; border-top: 1px solid var(--border-color); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+  
+  <div id="panel">
+    <div id="panel-header">
+      <h1>Farm Analysis</h1>
+      <p>Results for detected area</p>
+    </div>
+    
+    <div id="panel-content">
+      
+      <!-- Placeholder -->
+      <div id="state-placeholder" class="state-placeholder">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48" style="margin-bottom: 16px; opacity: 0.5">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+        </svg>
+        <p>Draw your farm boundary on the map to get started.</p>
+        <p style="font-size: 0.75rem; margin-top: 8px;">Use the polygon tool on the left side of the map.</p>
+      </div>
+      
+      <!-- Loading -->
+      <div id="state-loading" class="state-loading">
+        <div class="spinner"></div>
+        <p>Analyzing geographical & weather data...</p>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">This may take a few seconds</p>
+      </div>
+      
+      <!-- Error -->
+      <div id="error-box" class="error-box">
+        An error occurred during analysis.
+      </div>
+      
+      <!-- Results -->
+      <div id="state-results" class="state-results">
+        
+        <div id="crisis-banner">
+          ⚠️ Crisis Mode Active — Only survival crops recommended
+        </div>
+        
+        <div class="section">
+          <h3>Location details</h3>
+          <div class="grid-2">
+            <div class="stat-box">
+              <div class="stat-label">Region</div>
+              <div class="stat-value" id="r-region">-</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Area</div>
+              <div class="stat-value" id="r-area">-</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Soil type</div>
+              <div class="stat-value" id="r-soil">-</div>
+            </div>
+            <div class="stat-box" style="display: flex; flex-direction: column; justify-content: center;">
+              <div class="stat-label">Crisis Status</div>
+              <div><span id="r-crisis" class="badge badge-safe">Normal</span></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Weather Snapshot (Next 6 Days)</h3>
+          <div class="grid-2" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="stat-box">
+              <div class="stat-label">Avg Temp</div>
+              <div class="stat-value" id="r-temp">-</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Rainfall</div>
+              <div class="stat-value" id="r-rain">-</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Humidity</div>
+              <div class="stat-value" id="r-hum">-</div>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top: 12px;">
+            <div class="stat-box">
+              <div class="stat-label">Flood Risk</div>
+              <div class="stat-value" id="r-flood" style="font-size: 1rem; text-transform: capitalize;">-</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Drought Risk</div>
+              <div class="stat-value" id="r-drought" style="font-size: 1rem; text-transform: capitalize;">-</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Best Planting Window</h3>
+          <div class="stat-box">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <strong id="r-window-dates">-</strong>
+              <span id="r-window-label" class="badge badge-safe">-</span>
+            </div>
+            <div class="stat-label" style="font-size: 0.75rem;">Score: <span id="r-window-score">-</span>/100</div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>AI Recommended Crops</h3>
+          <div id="r-crops-container">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+        
+      </div>
+      
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script>
+    // Auth Check
+    const token = localStorage.getItem("growise_token");
+    if (!token) {
+      window.location.href = "index.html"; 
+    }
+    
+    // UI Elements
+    const uiPlaceholder = document.getElementById("state-placeholder");
+    const uiLoading = document.getElementById("state-loading");
+    const uiResults = document.getElementById("state-results");
+    const uiError = document.getElementById("error-box");
+    
+    // Setup Map
+    const map = L.map('map').setView([2.5, 113.0], 7);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    
+    const drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: drawnItems,
+        edit: false,
+        remove: false
+      },
+      draw: {
+        polygon: true,
+        polyline: false,
+        rectangle: false,
+        circle: false,
+        marker: false,
+        circlemarker: false
+      }
+    });
+    map.addControl(drawControl);
+    
+    // Draw event
+    map.on(L.Draw.Event.CREATED, async function (event) {
+      const layer = event.layer;
+      
+      // Clear previous polygons
+      drawnItems.clearLayers();
+      drawnItems.addLayer(layer);
+      
+      // Extract coordinates
+      const latlngs = layer.getLatLngs()[0];
+      const polygonArr = latlngs.map(ll => [ll.lat, ll.lng]);
+      
+      // Update UI state
+      uiPlaceholder.style.display = 'none';
+      uiResults.style.display = 'none';
+      uiError.style.display = 'none';
+      uiLoading.style.display = 'flex';
+      
+      try {
+        const response = await fetch("/api/map/analyze", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ polygon: polygonArr })
+        });
+        
+        if (response.status === 401) {
+          localStorage.removeItem("growise_token");
+          window.location.href = "index.html";
+          return;
+        }
+        
+        const data = await response.json();
+        
+        if (!response.ok || !data.success) {
+          throw new Error(data.detail || "API request failed");
+        }
+        
+        renderResults(data);
+        
+      } catch (err) {
+        console.error(err);
+        uiError.innerText = "Error: " + err.message;
+        uiError.style.display = 'block';
+        uiLoading.style.display = 'none';
+      }
+    });
+    
+    function formatDateRange(d1, d2) {
+      if (!d1) return "No suitable dates";
+      const f1 = new Date(d1).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      const f2 = new Date(d2).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      return `${f1} – ${f2}`;
+    }
+    
+    function renderResults(data) {
+      // Hide loading
+      uiLoading.style.display = 'none';
+      uiResults.style.display = 'block';
+      
+      // Basic info
+      document.getElementById('r-region').innerText = data.detected_region;
+      document.getElementById('r-area').innerText = `${data.area.acres} acres\n(${data.area.sqft} sqft)`;
+      document.getElementById('r-soil').innerText = data.soil_type;
+      
+      // Crisis
+      const bCrisis = document.getElementById('r-crisis');
+      const mode = data.crisis_status.mode;
+      bCrisis.innerText = mode;
+      
+      if (mode === "CRISIS") {
+        bCrisis.className = "badge badge-danger";
+        document.getElementById("crisis-banner").style.display = "block";
+      } else if (mode === "WARNING") {
+        bCrisis.className = "badge badge-warning";
+        document.getElementById("crisis-banner").style.display = "none";
+      } else {
+        bCrisis.className = "badge badge-safe";
+        document.getElementById("crisis-banner").style.display = "none";
+      }
+      
+      // Weather
+      const snap = data.weather_snapshot;
+      document.getElementById('r-temp').innerText = snap.avg_temp + "°C";
+      document.getElementById('r-rain').innerText = snap.total_rainfall + "mm";
+      document.getElementById('r-hum').innerText = snap.avg_humidity + "%";
+      
+      // Colors for risks
+      const rFlood = document.getElementById('r-flood');
+      rFlood.innerText = snap.flood_risk;
+      rFlood.style.color = snap.flood_risk === 'high' ? 'var(--danger)' : (snap.flood_risk === 'medium' ? 'var(--warning)' : '#cbd5e1');
+      
+      const rDrought = document.getElementById('r-drought');
+      rDrought.innerText = snap.drought_risk;
+      rDrought.style.color = snap.drought_risk === 'high' ? 'var(--danger)' : (snap.drought_risk === 'medium' ? 'var(--warning)' : '#cbd5e1');
+      
+      // Planting Window
+      const pw = data.best_planting_window;
+      document.getElementById('r-window-dates').innerText = formatDateRange(pw.start_date, pw.end_date);
+      document.getElementById('r-window-score').innerText = Math.round(pw.score);
+      
+      const wl = document.getElementById('r-window-label');
+      wl.innerText = pw.label;
+      if (pw.label === "Excellent") wl.className = "badge badge-safe";
+      else if (pw.label === "Good") wl.className = "badge badge-safe";
+      else if (pw.label === "Acceptable") wl.className = "badge badge-warning";
+      else wl.className = "badge badge-danger";
+      
+      // Crops
+      const cc = document.getElementById('r-crops-container');
+      cc.innerHTML = "";
+      if (data.top_3_crops && data.top_3_crops.length > 0) {
+        data.top_3_crops.forEach(c => {
+          cc.innerHTML += `
+            <div class="crop-card">
+              <div class="crop-header">
+                <div>
+                  <div class="crop-title">${c.crop_name || c.local_name}</div>
+                  <div class="crop-subtitle">${c.local_name || c.crop_name} • ${c.difficulty || 'Easy'}</div>
+                </div>
+                <div class="badge badge-safe">${c.confidence || 0}% Match</div>
+              </div>
+              <div class="crop-reason">${c.one_line_reason || ''}</div>
+            </div>
+          `;
+        });
+      } else {
+        cc.innerHTML = "<p style='color: var(--text-muted);'>No crops recommended.</p>";
+      }
+    }
+  </script>
+</body>
+</html>

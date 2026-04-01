@@ -1,48 +1,35 @@
-import httpx
+import math
 
-async def get_soil_type(lat: float, lng: float) -> str:
-    try:
-        url = "https://rest.isric.org/soilgrids/v2.0/properties/query"
-        params = {
-            "lon":      lng,
-            "lat":      lat,
-            "property": ["clay", "sand", "silt"],
-            "depth":    "0-5cm",
-            "value":    "mean"
-        }
+REGION_SOIL = {
+    "Kuching":   "Clay Loam",
+    "Miri":      "Loam",
+    "Sibu":      "Peat Soil",
+    "Bintulu":   "Sandy Loam",
+    "Sri Aman":  "Clay",
+    "Kapit":     "Loam",
+    "Mukah":     "Peat Soil",
+    "Lawas":     "Sandy Loam",
+    "Sarikei":   "Clay Loam",
+    "Serian":    "Clay Loam",
+}
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
+REGIONS = [
+    {"name": "Kuching",  "lat": 1.5533, "lng": 110.3592},
+    {"name": "Miri",     "lat": 4.3995, "lng": 113.9914},
+    {"name": "Sibu",     "lat": 2.2885, "lng": 111.8295},
+    {"name": "Bintulu",  "lat": 3.1667, "lng": 113.0333},
+    {"name": "Sri Aman", "lat": 1.2333, "lng": 111.4667},
+    {"name": "Kapit",    "lat": 2.0167, "lng": 112.9333},
+    {"name": "Mukah",    "lat": 2.9000, "lng": 112.0833},
+    {"name": "Lawas",    "lat": 4.8500, "lng": 115.4000},
+    {"name": "Sarikei",  "lat": 2.1333, "lng": 111.5167},
+]
 
-        if response.status_code != 200:
-            return "Loam"
-
-        data   = response.json()
-        layers = data.get("properties", {}).get("layers", [])
-
-        clay = sand = silt = 0
-
-        for layer in layers:
-            name  = layer.get("name", "")
-            value = layer.get("depths", [{}])[0] \
-                        .get("values", {}).get("mean", 0)
-
-            if value:
-                value = value / 10
-
-            if name == "clay": clay = value
-            if name == "sand": sand = value
-            if name == "silt": silt = value
-
-        return classify_soil(clay, sand, silt)
-
-    except Exception:
-        return "Loam"
-
-
-def classify_soil(clay: float, sand: float, silt: float) -> str:
-    if sand >= 70:   return "Sandy"
-    elif clay >= 40: return "Clay"
-    elif clay >= 25: return "Clay Loam"
-    elif silt >= 50: return "Silt Loam"
-    else:            return "Loam"
+def get_soil_type(lat: float, lng: float) -> str:
+    nearest = min(
+        REGIONS,
+        key=lambda r: math.sqrt((lat - r["lat"])**2 + (lng - r["lng"])**2)
+    )
+    soil = REGION_SOIL.get(nearest["name"], "Loam")
+    print(f"Soil lookup: {nearest['name']} → {soil}")
+    return soil
