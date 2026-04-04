@@ -993,95 +993,40 @@
 }
 
 
-/* ── Land Analysis Map ── */
-
-#land-map {
-  width: 100%;
-  height: 500px;
-  border-radius: 12px;
-  border: 2px solid #E0E0E0;
-  margin: 12px 0;
-}
-.layer-toggles {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 12px 0;
-}
-.layer-btn {
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 2px solid #1565C0;
-  background: white;
-  color: #1565C0;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 12px;
-  transition: all .2s;
-}
-.layer-btn.active {
-  background: #1565C0;
-  color: white;
-}
-.layer-btn:hover:not(.active) {
-  background: #E3F2FD;
-}
-.land-stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 12px;
-}
-.land-stat-card {
-  background: #F9FBE7;
-  border-radius: 12px;
-  padding: 16px;
+/* ── GrowBuddy Calendar ────────────────────────────── */
+.cal-day-card {
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
   border: 1px solid #E0E0E0;
+  background: #FAFAFA;
 }
-.land-stat-card h4 {
-  margin: 0 0 8px 0;
-  color: #1B5E20;
-  font-size: 14px;
-}
-.land-stat-card .stat-value {
-  font-size: 22px;
-  font-weight: bold;
-  color: #2E7D32;
-}
-.land-stat-card .stat-label {
-  font-size: 11px;
-  color: #757575;
-  margin-top: 4px;
-}
-.land-stat-card .stat-range {
+.cal-day-card.accurate  { background: #FAFFFE; border-color: #C8E6C9; }
+.cal-day-card.predicted { background: #F8FBFF; border-color: #BBDEFB; }
+.cal-day-card.estimated { background: #FAFAFA; border-color: #E0E0E0; }
+.cal-day-card.has-events { border-left: 4px solid currentColor; }
+.cal-day-card.has-events.accurate  { border-left-color: #2E7D32; }
+.cal-day-card.has-events.predicted { border-left-color: #1565C0; }
+.cal-day-card.has-events.estimated { border-left-color: #9E9E9E; }
+
+.cal-event-row {
   font-size: 12px;
-  color: #616161;
-  margin-top: 6px;
-}
-.land-stat-card .stat-desc {
-  font-size: 11px;
-  color: #9E9E9E;
-  margin-top: 8px;
-  line-height: 1.4;
-}
-.date-range-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin: 8px 0;
-}
-.date-range-row input[type="date"] {
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-}
-.date-range-row label {
-  font-size: 13px;
-  font-weight: bold;
   color: #424242;
+  padding: 5px 8px;
+  margin-top: 4px;
+  border-radius: 0 6px 6px 0;
+  background: #F5F5F5;
+  line-height: 1.5;
 }
+.cal-alert-row {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 5px 10px;
+  margin-top: 4px;
+  border-radius: 6px;
+}
+.cal-alert-row.CRITICAL { background: #FFEBEE; color: #B71C1C; }
+.cal-alert-row.WARNING  { background: #FFF3E0; color: #E65100; }
 
   </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -1116,7 +1061,7 @@
     <div class="tab" onclick="showTab('pesticide')">🧪 Pesticide</div>
     <div class="tab" onclick="showTab('harvest')">🌾 Harvest</div>
     <div class="tab" onclick="showTab('crisis')">🚨 Crisis</div>
-    <div class="tab" onclick="showTab('landanalysis')">🛰️ Land Analysis</div>
+    <div class="tab" onclick="showTab('calendar')">📅 GrowBuddy Calendar</div>
   </div>
 
   <!-- ══ REGISTER ══════════════════════════════════════════════ -->
@@ -1631,45 +1576,41 @@
   </div>
 </div>
 
-<!-- ══ LAND ANALYSIS TAB ═══════════════════════════════════ -->
-<div class="section" id="tab-landanalysis">
+<!-- ══ GROWBUDDY CALENDAR ════════════════════════════════════ -->
+<div class="section" id="tab-calendar">
   <div class="card">
-    <h2>🛰️ Farm Land Analysis</h2>
+    <h2>� GrowBuddy Calendar</h2>
     <div class="info-box blue">
-      Draw a polygon on the map to analyze your farmland using satellite data from Google Earth Engine.
-      Get insights on evapotranspiration, elevation, wind speed, and rainfall.
+      Get a personalized growth calendar for your crops. Enter your crop details and planting date to see the full growth cycle with fertilization and pest control schedules.
     </div>
-
-    <div class="date-range-row">
-      <label>From:</label>
-      <input type="date" id="gee-start-date"/>
-      <label>To:</label>
-      <input type="date" id="gee-end-date"/>
-      <button class="btn" onclick="analyzeDrawnPolygon()" id="btn-analyze-land" disabled
-              style="padding:8px 16px;font-size:13px">
-        Analyze Polygon →
-      </button>
-      <button class="btn" onclick="clearPolygon()"
-              style="padding:8px 16px;font-size:13px;background:#ef5350">
-        Clear
-      </button>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Select Profile</label>
+        <select id="cal-profile" onchange="fillCalFromProfile()">
+          <option value="">Select a profile...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Crop</label>
+        <select id="cal-crop">
+          <option value="">Select crop...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Planted Date</label>
+        <input type="date" id="cal-planted-date"/>
+      </div>
+      <div class="form-group">
+        <label>Growth Duration (days)</label>
+        <input type="number" id="cal-duration" value="90" min="1" max="365"/>
+      </div>
     </div>
-
-    <div id="land-map"></div>
-
-    <div class="layer-toggles" id="layer-toggles" style="display:none">
-      <button class="layer-btn active" onclick="toggleLayer('evapotranspiration',this)">💧 Evapotranspiration</button>
-      <button class="layer-btn active" onclick="toggleLayer('elevation',this)">⛰️ Elevation</button>
-      <button class="layer-btn active" onclick="toggleLayer('wind_speed',this)">💨 Wind Speed</button>
-      <button class="layer-btn active" onclick="toggleLayer('rainfall',this)">🌧️ Rainfall</button>
-      <button class="layer-btn active" onclick="toggleLayer('ndvi',this)">🌿 NDVI</button>
-      <button class="layer-btn active" onclick="toggleLayer('soil_moisture',this)">🟤 Soil Moisture</button>
-      <button class="layer-btn active" onclick="toggleLayer('land_surface_temp',this)">🌡️ Temperature</button>
-      <button class="layer-btn active" onclick="toggleLayer('ndwi',this)">🌊 Water Index</button>
+    <button class="btn" onclick="getGrowBuddyCalendar()">Generate Calendar →</button>
+    <div class="status-bar" id="cal-status"></div>
+    <div id="calendar-output" style="display:none">
+      <h3>📅 Growth Calendar</h3>
+      <div id="calendar-grid"></div>
     </div>
-
-    <div class="status-bar" id="land-status"></div>
-    <div class="land-stats-grid" id="land-stats" style="display:none"></div>
   </div>
 </div>
 
@@ -1736,7 +1677,7 @@ function showTab(name) {
 
   const order = [
   'register','login','profile','view','mycrops',
-  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis','landanalysis'
+  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis','calendar'
 ];
   const idx   = order.indexOf(name);
   if (idx >= 0) {
@@ -5510,11 +5451,8 @@ function toggleLayer(key, btn) {
 const origShowTab = showTab;
 showTab = function(name) {
   origShowTab(name);
-  if (name === 'landanalysis') {
-    setTimeout(() => {
-      initLandMap();
-      landMap.invalidateSize();
-    }, 100);
+  if (name === 'calendar') {
+    // No special init needed for calendar
   }
 };
 </script>

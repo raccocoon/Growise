@@ -6,7 +6,7 @@ from datetime import date
 from app.services.supabase_client import supabase
 from app.services.calendar_service import generate_calendar
 
-router = APIRouter(prefix="/api", tags=["Land Analysis"])
+router = APIRouter(prefix="/api", tags=["Calendar"])
 
 
 def get_user(authorization: str) -> str:
