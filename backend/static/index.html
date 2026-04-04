@@ -4,8 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GroWise — Test UI</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
   <style>
 
 /* ── Guide sections ── */
@@ -994,41 +992,100 @@
   transition: width 0.3s;
 }
 
-/* ── GrowBuddy Calendar ────────────────────────────── */
-.cal-day-card {
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 6px;
-  border: 1px solid #E0E0E0;
-  background: #FAFAFA;
-}
-.cal-day-card.accurate  { background: #FAFFFE; border-color: #C8E6C9; }
-.cal-day-card.predicted { background: #F8FBFF; border-color: #BBDEFB; }
-.cal-day-card.estimated { background: #FAFAFA; border-color: #E0E0E0; }
-.cal-day-card.has-events { border-left: 4px solid currentColor; }
-.cal-day-card.has-events.accurate  { border-left-color: #2E7D32; }
-.cal-day-card.has-events.predicted { border-left-color: #1565C0; }
-.cal-day-card.has-events.estimated { border-left-color: #9E9E9E; }
 
-.cal-event-row {
-  font-size: 12px;
-  color: #424242;
-  padding: 5px 8px;
-  margin-top: 4px;
-  border-radius: 0 6px 6px 0;
-  background: #F5F5F5;
-  line-height: 1.5;
+/* ── Land Analysis Map ── */
+
+#land-map {
+  width: 100%;
+  height: 500px;
+  border-radius: 12px;
+  border: 2px solid #E0E0E0;
+  margin: 12px 0;
 }
-.cal-alert-row {
-  font-size: 12px;
+.layer-toggles {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.layer-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid #1565C0;
+  background: white;
+  color: #1565C0;
+  cursor: pointer;
   font-weight: bold;
-  padding: 5px 10px;
-  margin-top: 4px;
-  border-radius: 6px;
+  font-size: 12px;
+  transition: all .2s;
 }
-.cal-alert-row.CRITICAL { background: #FFEBEE; color: #B71C1C; }
-.cal-alert-row.WARNING  { background: #FFF3E0; color: #E65100; }
+.layer-btn.active {
+  background: #1565C0;
+  color: white;
+}
+.layer-btn:hover:not(.active) {
+  background: #E3F2FD;
+}
+.land-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.land-stat-card {
+  background: #F9FBE7;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #E0E0E0;
+}
+.land-stat-card h4 {
+  margin: 0 0 8px 0;
+  color: #1B5E20;
+  font-size: 14px;
+}
+.land-stat-card .stat-value {
+  font-size: 22px;
+  font-weight: bold;
+  color: #2E7D32;
+}
+.land-stat-card .stat-label {
+  font-size: 11px;
+  color: #757575;
+  margin-top: 4px;
+}
+.land-stat-card .stat-range {
+  font-size: 12px;
+  color: #616161;
+  margin-top: 6px;
+}
+.land-stat-card .stat-desc {
+  font-size: 11px;
+  color: #9E9E9E;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+.date-range-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.date-range-row input[type="date"] {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+}
+.date-range-row label {
+  font-size: 13px;
+  font-weight: bold;
+  color: #424242;
+}
+
   </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 </head>
 <body>
 
@@ -1059,8 +1116,7 @@
     <div class="tab" onclick="showTab('pesticide')">🧪 Pesticide</div>
     <div class="tab" onclick="showTab('harvest')">🌾 Harvest</div>
     <div class="tab" onclick="showTab('crisis')">🚨 Crisis</div>
-    <div class="tab" onclick="showTab('calendar')">📆 GrowBuddy</div>
-    <div class="tab" onclick="showTab('map'); if(window.initMapIfNeeded) setTimeout(initMapIfNeeded, 150);">🗺️ Farm Map</div>
+    <div class="tab" onclick="showTab('landanalysis')">🛰️ Land Analysis</div>
   </div>
 
   <!-- ══ REGISTER ══════════════════════════════════════════════ -->
@@ -1334,13 +1390,6 @@
     </div>
 
     <div class="form-group">
-      <label>Load Active Crop</label>
-      <select id="plant-active-crop" onchange="fillPlantFromCrop()">
-        <option value="">— Select from My Crops —</option>
-      </select>
-    </div>
-
-    <div class="form-group">
       <label>Crop Name</label>
       <input type="text" id="plant-crop" placeholder="e.g. Kangkung — optional"/>
     </div>
@@ -1566,74 +1615,6 @@
   </div>
 </div>
 
-<!-- ══ GROWBUDDY CALENDAR ════════════════════════════════════ -->
-<div class="section" id="tab-calendar">
-  <div class="card">
-    <h2>📆 GrowBuddy 30-Day Calendar</h2>
-
-    <div class="info-box blue">
-      Your unified 30-day planting, fertilizing, pesticide, and harvest
-      timeline in one view. Select an active crop or enter crop details manually.
-    </div>
-
-    <!-- Crisis / warning banner — shown by JS when active -->
-    <div id="cal-crisis-banner" style="display:none"></div>
-
-    <!-- Zone legend -->
-    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;
-                color:#757575;margin-bottom:14px">
-      <span><span class="zone-dot accurate"></span> Accurate (days 1–6, real forecast)</span>
-      <span><span class="zone-dot predicted"></span> Predicted (days 7–14, ARIMA)</span>
-      <span><span class="zone-dot estimated"></span> Estimated (days 15–30, ARIMA)</span>
-    </div>
-
-    <div class="form-group">
-      <label>Farm Profile</label>
-      <select id="cal-profile">
-        <option value="">Loading...</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Load Active Crop</label>
-      <select id="cal-active-crop" onchange="fillCalFromCrop()">
-        <option value="">— Select from My Crops —</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Crop Name</label>
-      <input type="text" id="cal-crop" placeholder="e.g. Tomato"/>
-    </div>
-
-    <div class="form-group">
-      <label>Planted Date
-        <span style="font-size:11px;color:#757575">
-          (leave blank if not yet planted)
-        </span>
-      </label>
-      <input type="date" id="cal-planted"/>
-    </div>
-
-    <div class="form-group">
-      <label>Growth Duration (days)</label>
-      <input type="number" id="cal-duration" value="30" min="7" max="365"/>
-    </div>
-
-    <button class="btn" onclick="getGrowBuddyCalendar()" id="btn-calendar">
-      Build My 30-Day Calendar →
-    </button>
-
-    <div class="status-bar" id="cal-status"></div>
-
-    <!-- Harvest summary (populated by JS) -->
-    <div id="cal-harvest-summary"></div>
-
-    <!-- 30-day timeline (populated by JS) -->
-    <div id="cal-timeline"></div>
-  </div>
-</div>
-
 <!-- ══ MY CROPS ══════════════════════════════════════════════ -->
 <div class="section" id="tab-mycrops">
   <div class="card">
@@ -1650,58 +1631,45 @@
   </div>
 </div>
 
-<!-- ══ MAP ANALYSIS ════════════════════════════════════════════ -->
-<div class="section" id="tab-map">
+<!-- ══ LAND ANALYSIS TAB ═══════════════════════════════════ -->
+<div class="section" id="tab-landanalysis">
   <div class="card">
-    <h2>🗺️ Farm Map Analysis</h2>
+    <h2>🛰️ Farm Land Analysis</h2>
     <div class="info-box blue">
-      Draw your farm boundary on the map to automatically detect the nearest region, calculate farm acreage, pull relevant weather scenarios, and receive AI-curated crop recommendations!
-    </div>
-    
-    <div class="info-box orange" id="map-auth-note" style="display:none;">
-      ⚠️ Please register or login first to use map analysis.
+      Draw a polygon on the map to analyze your farmland using satellite data from Google Earth Engine.
+      Get insights on evapotranspiration, elevation, wind speed, and rainfall.
     </div>
 
-    <div id="growise-map" style="width: 100%; height: 400px; border-radius: 8px; border: 2px solid #E0E0E0; margin-bottom: 16px; z-index: 1;"></div>
-
-    <div class="status-bar" id="map-status"></div>
-
-    <div id="map-result" style="display:none; margin-top:20px;">
-      
-      <div id="map-crisis-banner" class="crisis-banner" style="display:none;"></div>
-
-      <!-- Location Info -->
-      <h3 style="margin: 16px 0 8px; color:#1B5E20; font-size:15px;">📍 Location Details</h3>
-      <div class="profile-card" style="margin-top:0;">
-        <div class="field"><span class="key">Detected Region</span><span class="val" id="map-res-region"></span></div>
-        <div class="field"><span class="key">Total Area</span><span class="val" id="map-res-area" style="white-space: pre-line; line-height:1.4;"></span></div>
-        <div class="field"><span class="key">Soil Type</span><span class="val" id="map-res-soil"></span></div>
-      </div>
-
-      <!-- Weather Info -->
-      <h3 style="margin: 20px 0 8px; color:#1B5E20; font-size:15px;">🌦️ Next 6 Days Snapshot</h3>
-      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
-        <div class="day-stat-box"><span class="sv" id="map-res-temp"></span><span class="sk">AVG TEMP</span></div>
-        <div class="day-stat-box"><span class="sv" id="map-res-rain"></span><span class="sk">RAINFALL</span></div>
-        <div class="day-stat-box"><span class="sv" id="map-res-hum"></span><span class="sk">HUMIDITY</span></div>
-      </div>
-      <div style="display:flex; gap:8px;">
-        <div class="day-stat-box" style="flex:1"><span class="sv" id="map-res-flood" style="text-transform: capitalize;"></span><span class="sk">FLOOD RISK</span></div>
-        <div class="day-stat-box" style="flex:1"><span class="sv" id="map-res-drought" style="text-transform: capitalize;"></span><span class="sk">DROUGHT RISK</span></div>
-      </div>
-
-      <!-- Planting Window -->
-      <h3 style="margin: 20px 0 8px; color:#1B5E20; font-size:15px;">📅 Ideal Planting Window</h3>
-      <div class="info-box blue" style="margin-top:0;">
-        <p style="margin:0; font-weight:bold;">📅 Planting Timing: Likely soon based on conditions</p>
-        <p style="margin:4px 0 0 0; font-size:12px; color:#1565C0;">🔒 Unlock exact planting window with Farm Profile</p>
-      </div>
-
-      <!-- AI Crops -->
-      <h3 style="margin: 20px 0 8px; color:#1B5E20; font-size:15px;">🤖 AI Recommendations</h3>
-      <div id="map-res-crops"></div>
-
+    <div class="date-range-row">
+      <label>From:</label>
+      <input type="date" id="gee-start-date"/>
+      <label>To:</label>
+      <input type="date" id="gee-end-date"/>
+      <button class="btn" onclick="analyzeDrawnPolygon()" id="btn-analyze-land" disabled
+              style="padding:8px 16px;font-size:13px">
+        Analyze Polygon →
+      </button>
+      <button class="btn" onclick="clearPolygon()"
+              style="padding:8px 16px;font-size:13px;background:#ef5350">
+        Clear
+      </button>
     </div>
+
+    <div id="land-map"></div>
+
+    <div class="layer-toggles" id="layer-toggles" style="display:none">
+      <button class="layer-btn active" onclick="toggleLayer('evapotranspiration',this)">💧 Evapotranspiration</button>
+      <button class="layer-btn active" onclick="toggleLayer('elevation',this)">⛰️ Elevation</button>
+      <button class="layer-btn active" onclick="toggleLayer('wind_speed',this)">💨 Wind Speed</button>
+      <button class="layer-btn active" onclick="toggleLayer('rainfall',this)">🌧️ Rainfall</button>
+      <button class="layer-btn active" onclick="toggleLayer('ndvi',this)">🌿 NDVI</button>
+      <button class="layer-btn active" onclick="toggleLayer('soil_moisture',this)">🟤 Soil Moisture</button>
+      <button class="layer-btn active" onclick="toggleLayer('land_surface_temp',this)">🌡️ Temperature</button>
+      <button class="layer-btn active" onclick="toggleLayer('ndwi',this)">🌊 Water Index</button>
+    </div>
+
+    <div class="status-bar" id="land-status"></div>
+    <div class="land-stats-grid" id="land-stats" style="display:none"></div>
   </div>
 </div>
 
@@ -1748,8 +1716,6 @@
 
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script>
 
 // Same host/port as this page when served by the API; avoids localhost vs 127.0.0.1 mismatches.
@@ -1770,7 +1736,7 @@ function showTab(name) {
 
   const order = [
   'register','login','profile','view','mycrops',
-  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis','calendar'
+  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis','landanalysis'
 ];
   const idx   = order.indexOf(name);
   if (idx >= 0) {
@@ -1786,7 +1752,6 @@ function showTab(name) {
   if (name === 'pesticide') loadProfilesForPesticide();
   if (name === 'harvest') loadProfilesForHarvest();
   if (name === 'crisis') loadProfilesForCrisis();
-  if (name === 'calendar') loadCalendarCrops();
   if (name === 'mycrops') loadMyCrops();
   updateAuthNote();
 }
@@ -2405,7 +2370,7 @@ async function getWeather() {
             <div class="conf-label-row">
               <span style="color:#757575">Forecast confidence</span>
               <span style="color:${confColor};font-weight:bold">
-                ${d.confidence}%
+                ${d.confidence_label}
               </span>
             </div>
             <div class="conf-track">
@@ -2416,7 +2381,22 @@ async function getWeather() {
             </div>
           </div>
 
-
+          <!-- Farming score bar -->
+          <div class="farm-score-row">
+            <span style="font-size:11px;color:#757575;min-width:80px">
+              Farm score
+            </span>
+            <div class="farm-score-track">
+              <div class="farm-score-fill"
+                   style="width:${d.farming_score}%;
+                          background:${farmColor}">
+              </div>
+            </div>
+            <span style="font-size:11px;font-weight:bold;
+                         color:${farmColor};min-width:24px">
+              ${d.farming_score}
+            </span>
+          </div>
 
           <!-- Extra chips row -->
           <div class="day-extra-row">
@@ -3123,59 +3103,6 @@ async function loadProfilesForPlanting() {
     document.getElementById('plant-profile').innerHTML =
       '<option value="">Failed to load</option>';
   }
-
-  // Load active crops dropdown
-  await loadActiveCropsForPlanting();
-
-  // Auto-fill from My Crops if available
-  if (_activeCropName) {
-    document.getElementById('plant-crop').value = _activeCropName;
-  }
-}
-
-async function loadActiveCropsForPlanting() {
-  try {
-    const res  = await fetch(API+'/api/planting-logs/active', {headers:hdrs()});
-    const data = await res.json();
-    const sel  = document.getElementById('plant-active-crop');
-    if (!sel) return;
-    sel.innerHTML = '<option value="">— Select from My Crops —</option>';
-    if (data.success && data.data.length > 0) {
-      data.data.forEach(log => {
-        const o = document.createElement('option');
-        o.value = JSON.stringify({
-          crop_name:    log.crop_name,
-          planted_date: log.planted_date
-        });
-        o.textContent = log.crop_name
-          + ' — planted '
-          + log.planted_date
-          + ' ('
-          + log.days_since_planted
-          + 'd ago)';
-        sel.appendChild(o);
-      });
-    }
-  } catch(e) {
-    console.error('Cannot load active crops', e);
-  }
-}
-
-function fillPlantFromCrop() {
-  const sel = document.getElementById('plant-active-crop');
-  if (!sel || !sel.value) return;
-  try {
-    const data = JSON.parse(sel.value);
-    document.getElementById('plant-crop').value = data.crop_name;
-    
-    // Also auto-fill 'planted' if it's there
-    let plantedSelect = document.getElementById('plant-planted');
-    if (plantedSelect) {
-      plantedSelect.value = 'yes';
-    }
-  } catch(e) {
-    console.error('Parse error', e);
-  }
 }
 
 // ── Load profiles for fertilize dropdown ───────────────────────
@@ -3483,7 +3410,7 @@ async function getFertilizeSchedule() {
       if (z) {
         calHtml += '<div style="margin-top:6px;font-size:10px;color:#9E9E9E">' +
           '<span class="zone-dot ' + z + '"></span>' +
-          '<span style="color:' + escapeHtml(d.confidence_color || '#9E9E9E') + '">' + (d.confidence != null ? escapeHtml(d.confidence) + '%' : '') + '</span>' +
+          escapeHtml(d.confidence_label || d.zone || '') +
           '</div>';
       }
       calHtml += '</div>';
@@ -3809,7 +3736,7 @@ async function getPesticideSchedule() {
           'Rain ' + (ws.rain_probability != null ? ws.rain_probability : '—')
           + '%</div>' +
           '<div style="font-size:10px;color:#9E9E9E;margin-top:2px">' +
-          '<div style="font-size:10px;margin-top:2px;font-weight:bold;color:' + escapeHtml(d.confidence_color || '#9E9E9E') + '">' + (d.confidence != null ? escapeHtml(d.confidence) + '%' : '') + '</div>' +
+          escapeHtml(d.confidence_label || '') + '</div>' +
           '<div class="pest-confidence-bar">' +
           '<div class="pest-confidence-fill" style="width:' + conf + '%">' +
           '</div></div>' +
@@ -5354,488 +5281,242 @@ window.onload = async () => {
     } catch (e) { /* non-critical */ }
   }
 };
+</script>
 
-// ── Farm Map SPA Logic ──────────────────────────────────────────
-let leafletMap = null;
+<!-- Leaflet & Draw Plugin -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<script>
+// ── Land Analysis (GEE) ────────────────────────────────────
+
+let landMap = null;
 let drawnItems = null;
+let geeLayers = {};
+let drawnPolygonCoords = null;
 
-function initMapIfNeeded() {
-  if (!leafletMap) {
-    leafletMap = L.map('growise-map').setView([2.5, 113.0], 7);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(leafletMap);
-    
-    drawnItems = new L.FeatureGroup();
-    leafletMap.addLayer(drawnItems);
-    
-    const drawControl = new L.Control.Draw({
-      edit: { featureGroup: drawnItems, edit: false, remove: false },
-      draw: { polygon: true, polyline: false, rectangle: false, circle: false, marker: false, circlemarker: false }
-    });
-    leafletMap.addControl(drawControl);
-    
-    leafletMap.on(L.Draw.Event.CREATED, async function (event) {
-      drawnItems.clearLayers();
-      drawnItems.addLayer(event.layer);
-      
-      const latlngs = event.layer.getLatLngs()[0];
-      const polygonArr = latlngs.map(ll => [ll.lat, ll.lng]);
-      
-      await analyzeFarmMap(polygonArr);
-    });
-  }
-  setTimeout(() => leafletMap.invalidateSize(), 100);
+function initLandMap() {
+  if (landMap) return;
+
+  // Default center: Sarawak
+  landMap = L.map('land-map').setView([2.5, 111.0], 8);
+
+  L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0','mt1','mt2','mt3'],
+    attribution: '&copy; Google'
+  }).addTo(landMap);
+
+  drawnItems = new L.FeatureGroup();
+  landMap.addLayer(drawnItems);
+
+  const drawControl = new L.Control.Draw({
+    draw: {
+      polygon: {
+        allowIntersection: false,
+        shapeOptions: { color: '#d32f2f', weight: 2, fillColor: '#d32f2f', fillOpacity: 0.20 }
+      },
+      polyline: false,
+      rectangle: {
+        shapeOptions: { color: '#d32f2f', weight: 2, fillColor: '#d32f2f', fillOpacity: 0.20 }
+      },
+      circle: false, marker: false, circlemarker: false
+    },
+    edit: { featureGroup: drawnItems }
+  });
+  landMap.addControl(drawControl);
+
+  landMap.on(L.Draw.Event.CREATED, function (e) {
+    drawnItems.clearLayers();
+    clearGEELayers();
+    e.layer.setStyle({ color: '#d32f2f', weight: 2, fillColor: '#d32f2f', fillOpacity: 0.20 });
+    drawnItems.addLayer(e.layer);
+
+    const latlngs = e.layer.getLatLngs()[0];
+    drawnPolygonCoords = latlngs.map(ll => [ll.lng, ll.lat]);
+    // Close the polygon
+    drawnPolygonCoords.push(drawnPolygonCoords[0]);
+
+    document.getElementById('btn-analyze-land').disabled = false;
+    document.getElementById('land-status').textContent =
+      'Polygon drawn with ' + latlngs.length + ' points. Click "Analyze Polygon" to proceed.';
+    document.getElementById('land-status').className = 'status-bar info';
+  });
+
+  landMap.on(L.Draw.Event.DELETED, function () {
+    drawnPolygonCoords = null;
+    document.getElementById('btn-analyze-land').disabled = true;
+    clearGEELayers();
+  });
+
+  // Set default dates (last 30 days)
+  const today = new Date();
+  const thirtyAgo = new Date(today);
+  thirtyAgo.setDate(today.getDate() - 30);
+  document.getElementById('gee-end-date').value = today.toISOString().split('T')[0];
+  document.getElementById('gee-start-date').value = thirtyAgo.toISOString().split('T')[0];
 }
 
-async function analyzeFarmMap(polygon) {
-  const sb = document.getElementById('map-status');
-  const resDiv = document.getElementById('map-result');
-  
-  if (!token) {
-    document.getElementById('map-auth-note').style.display = 'block';
-    return;
-  }
-  
-  sb.className = 'status-bar show loading';
-  sb.innerText = 'Analyzing polygon boundaries...';
-  resDiv.style.display = 'none';
-  
-  try {
-    const res = await fetch(`${API}/api/map/analyze`, {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify({ polygon })
-    });
-    
-    if (res.status === 401) {
-      sb.className = 'status-bar show error';
-      sb.innerText = 'Session expired. Please login again.';
-      return;
-    }
-    
-    const data = await res.json();
-    if (!res.ok || !data.success) throw new Error(data.detail || "API failed");
-    
-    sb.className = 'status-bar show success';
-    sb.innerText = 'Analysis complete!';
-    
-    document.getElementById('map-res-region').innerText = data.region;
-    document.getElementById('map-res-area').innerText = `${data.area.acres} acres\n(${data.area.sqft} sqft)`;
-    document.getElementById('map-res-soil').innerText = data.soil_profile.dominant_soil;
-    
-    const banner = document.getElementById('map-crisis-banner');
-    if (data.crisis_status.mode === "CRISIS") {
-      banner.style.display = 'block';
-      banner.className = 'crisis-banner crisis';
-      banner.innerHTML = `⚠️ <b>CRISIS DETECTED</b><br/>Only survival crops recommended due to extreme conditions.`;
-    } else if (data.crisis_status.mode === "WARNING") {
-        banner.style.display = 'block';
-        banner.className = 'crisis-banner warning';
-        banner.innerHTML = `⚠️ <b>WARNING</b><br/>Weather is worsening. Take precautions.`;
-    } else {
-        banner.style.display = 'none';
-    }
-    
-    document.getElementById('map-res-temp').innerText = data.farming_snapshot.avg_temp + '°C';
-    document.getElementById('map-res-rain').innerText = data.farming_snapshot.total_rainfall_mm + 'mm';
-    document.getElementById('map-res-hum').innerText = data.farming_snapshot.avg_humidity + '%';
-    
-    const fNode = document.getElementById('map-res-flood');
-    fNode.style.color = data.risk_levels.flood_risk === 'High' ? '#B71C1C' : 
-                        data.risk_levels.flood_risk === 'Medium' ? '#E65100' : '#2E7D32';
-    fNode.innerText = data.risk_levels.flood_risk;
-
-    const dNode = document.getElementById('map-res-drought');
-    dNode.style.color = data.risk_levels.drought_risk === 'High' ? '#B71C1C' : 
-                        data.risk_levels.drought_risk === 'Medium' ? '#E65100' : '#2E7D32';
-    dNode.innerText = data.risk_levels.drought_risk;
-
-    const cropDiv = document.getElementById('map-res-crops');
-    cropDiv.innerHTML = "";
-    if (data.suitable_crops && data.suitable_crops.length > 0) {
-      data.suitable_crops.forEach((c, idx) => {
-        const cls = idx === 0 ? "rank-1" : idx === 1 ? "rank-2" : "rank-3";
-        cropDiv.innerHTML += `
-          <div class="crop-card ${cls}" style="margin-top:10px;">
-            <div class="crop-name-row">
-              <span class="crop-rank-badge">#${idx+1}</span>
-              <span class="crop-name">${c.crop_name || c.local_name}</span>
-              <span class="crop-local">(${c.local_name || c.crop_name})</span>
-            </div>
-            ${c.difficulty ? `<div class="crop-stats" style="margin-bottom:8px;">
-               <div class="crop-stat"><span class="csk">MATCH</span><span class="csv">${c.confidence || '--'}%</span></div>
-               <div class="crop-stat"><span class="csk">DIFFICULTY</span><span class="csv">${c.difficulty}</span></div>
-            </div>` : ''}
-            ${c.one_line_reason ? `<div class="crop-why">${c.one_line_reason}</div>` : ''}
-          </div>
-        `;
-      });
-    } else {
-      cropDiv.innerHTML = "<div class='info-box orange'>No crops recommended.</div>";
-    }
-
-    resDiv.style.display = 'block';
-
-  } catch (err) {
-    sb.className = 'status-bar show error';
-    sb.innerText = err.message;
-  }
+function clearPolygon() {
+  if (drawnItems) drawnItems.clearLayers();
+  drawnPolygonCoords = null;
+  document.getElementById('btn-analyze-land').disabled = true;
+  document.getElementById('land-status').textContent = '';
+  document.getElementById('land-stats').style.display = 'none';
+  document.getElementById('layer-toggles').style.display = 'none';
+  clearGEELayers();
 }
 
-// ══════════════════════════════════════════════════════════════
-//  GrowBuddy 30-Day Calendar
-// ══════════════════════════════════════════════════════════════
-
-async function loadCalendarCrops() {
-  if (!token) return;
-
-  // Farm profiles
-  try {
-    const res  = await fetch(API + '/api/profile/farms', { headers: hdrs() });
-    const data = await res.json();
-    const sel  = document.getElementById('cal-profile');
-    sel.innerHTML = '';
-    if (data.success && data.data && data.data.length > 0) {
-      data.data.forEach(p => {
-        const o = document.createElement('option');
-        o.value       = p.id;
-        o.textContent = p.region_name + ' — ' + p.land_size + ' ' + p.land_size_unit
-                        + ' (' + (p.soil_type || 'unknown soil') + ')';
-        if (p.is_default) o.selected = true;
-        sel.appendChild(o);
-      });
-    } else {
-      sel.innerHTML = '<option value="">No profiles yet</option>';
-    }
-  } catch (e) {
-    document.getElementById('cal-profile').innerHTML =
-      '<option value="">Failed to load profiles</option>';
-  }
-
-  // Active crops
-  try {
-    const res  = await fetch(API + '/api/planting-logs/active', { headers: hdrs() });
-    const data = await res.json();
-    const sel  = document.getElementById('cal-active-crop');
-    if (!sel) return;
-    sel.innerHTML = '<option value="">— Select from My Crops —</option>';
-    if (data.success && data.data && data.data.length > 0) {
-      data.data.forEach(log => {
-        const o = document.createElement('option');
-        o.value = JSON.stringify({
-          crop_name:            log.crop_name,
-          planted_date:         log.planted_date,
-          growth_duration_days: log.growth_duration_days || 30,
-          farm_profile_id:      log.farm_profile_id
-        });
-        o.textContent = log.crop_name + ' — planted ' + log.planted_date
-                        + ' (' + (log.days_since_planted || 0) + 'd ago)';
-        sel.appendChild(o);
-      });
-    }
-  } catch (e) {
-    console.error('loadCalendarCrops active crops error', e);
-  }
+function clearGEELayers() {
+  Object.values(geeLayers).forEach(layer => {
+    if (landMap.hasLayer(layer)) landMap.removeLayer(layer);
+  });
+  geeLayers = {};
 }
 
-function fillCalFromCrop() {
-  const sel = document.getElementById('cal-active-crop');
-  if (!sel || !sel.value) return;
-  try {
-    const data = JSON.parse(sel.value);
-    document.getElementById('cal-crop').value     = data.crop_name    || '';
-    document.getElementById('cal-planted').value  = data.planted_date || '';
-    document.getElementById('cal-duration').value = data.growth_duration_days || 30;
-    if (data.farm_profile_id) {
-      document.getElementById('cal-profile').value = data.farm_profile_id;
-    }
-  } catch (e) {
-    console.error('fillCalFromCrop parse error', e);
-  }
-}
+async function analyzeDrawnPolygon() {
+  if (!drawnPolygonCoords) return;
 
-async function getGrowBuddyCalendar() {
-  const btn = document.getElementById('btn-calendar');
-  clearStatus('cal-status');
-  document.getElementById('cal-harvest-summary').innerHTML = '';
-  document.getElementById('cal-timeline').innerHTML        = '';
-  document.getElementById('cal-crisis-banner').style.display = 'none';
+  const statusEl = document.getElementById('land-status');
+  const statsEl = document.getElementById('land-stats');
+  const btn = document.getElementById('btn-analyze-land');
 
-  if (!token) {
-    setStatus('cal-status', '⚠️ Please login first', 'error');
-    return;
-  }
-
-  const pid      = document.getElementById('cal-profile').value;
-  const cropName = document.getElementById('cal-crop').value.trim();
-
-  if (!pid)      { setStatus('cal-status', '⚠️ Select a farm profile', 'error'); return; }
-  if (!cropName) { setStatus('cal-status', '⚠️ Enter a crop name', 'error');     return; }
-
-  const planted  = document.getElementById('cal-planted').value  || null;
-  const duration = parseInt(document.getElementById('cal-duration').value) || 30;
-
+  statusEl.textContent = 'Analyzing polygon with Google Earth Engine... This may take 15-30 seconds.';
+  statusEl.className = 'status-bar info';
+  statsEl.style.display = 'none';
   btn.disabled = true;
-  setStatus('cal-status', '⏳ Building your 30-day GrowBuddy Calendar…', 'loading');
 
   try {
-    const res = await fetch(API + '/api/calendar', {
-      method:  'POST',
-      headers: hdrs(),
-      body:    JSON.stringify({
-        profile_id:           pid,
-        crop_name:            cropName,
-        planted_date:         planted,
-        growth_duration_days: duration
-      })
+    const body = {
+      coordinates: drawnPolygonCoords,
+      start_date: document.getElementById('gee-start-date').value || null,
+      end_date: document.getElementById('gee-end-date').value || null
+    };
+
+    const res = await fetch(API + '/api/land-analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
 
-    const text = await res.text();
-    let data;
-    try { data = text ? JSON.parse(text) : {}; }
-    catch {
-      setStatus('cal-status', '❌ Invalid server response (HTTP ' + res.status + ')', 'error');
-      btn.disabled = false;
-      return;
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Analysis failed');
     }
 
-    if (!res.ok || !data.success) {
-      let detail = data && (data.detail || data.message);
-      if (detail != null && typeof detail !== 'string') {
-        try { detail = JSON.stringify(detail); } catch { detail = String(detail); }
+    const json = await res.json();
+    const data = json.data;
+
+    statusEl.textContent = 'Analysis complete! Toggle layers on the map below.';
+    statusEl.className = 'status-bar success';
+
+    // Clear old layers
+    clearGEELayers();
+
+    // Add tile layers for each metric
+    const layerKeys = ['evapotranspiration', 'elevation', 'wind_speed', 'rainfall', 'ndvi', 'soil_moisture', 'land_surface_temp', 'ndwi'];
+    layerKeys.forEach(key => {
+      if (data[key] && data[key].tile_url) {
+        const tileLayer = L.tileLayer(data[key].tile_url, {
+          maxZoom: 20, opacity: 0.7
+        });
+        // Don't add to map by default — user toggles them one at a time
+        geeLayers[key] = tileLayer;
       }
-      setStatus('cal-status', '❌ ' + (detail || ('HTTP ' + res.status)), 'error');
-      btn.disabled = false;
-      return;
-    }
+    });
 
-    const days = data.calendar || [];
-    setStatus('cal-status',
-      '✅ Calendar ready — ' + days.length + ' days generated',
-      'success');
+    document.getElementById('layer-toggles').style.display = 'flex';
+    // All buttons start as inactive (no layers shown)
+    document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
 
-    // ── Crisis / warning banner ───────────────────────────────────────────
-    const crisis = data.crisis_status;
-    if (crisis && crisis.mode !== 'NORMAL') {
-      const banner = document.getElementById('cal-crisis-banner');
-      const isCrisis = crisis.mode === 'CRISIS';
-      banner.className = 'crisis-banner ' + (isCrisis ? 'crisis' : 'warning');
-      banner.style.display = 'block';
-      const triggers = (crisis.triggers || []).join(', ');
-      banner.innerHTML =
-        '<b>' + (isCrisis ? '🚨 Crisis Mode Active' : '⚠️ Weather Warning') + '</b>'
-        + ' — Risk Score ' + crisis.risk_score + '/100'
-        + (triggers ? '<div style="font-size:12px;margin-top:4px">' + escapeHtml(triggers) + '</div>' : '');
-    }
+    // Build stats cards
+    const cardConfig = {
+      evapotranspiration: { icon: '💧', name: 'Evapotranspiration', bg: '#F9FBE7',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>` },
+      elevation: { icon: '⛰️', name: 'Elevation', bg: '#FFF3E0',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min}m | Max: ${s.max}m | Slope: ${s.slope_mean}°</div>` },
+      wind_speed: { icon: '💨', name: 'Wind Speed', bg: '#E3F2FD',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>` },
+      rainfall: { icon: '🌧️', name: 'Rainfall', bg: '#E8EAF6',
+        render: s => `<div class="stat-value">${s.total} <span style="font-size:13px">${s.unit} total</span></div>
+                       <div class="stat-range">Daily avg: ${s.daily_avg}mm | Min: ${s.min}mm | Max: ${s.max}mm</div>` },
+      ndvi: { icon: '🌿', name: 'Vegetation Health (NDVI)', bg: '#E8F5E9',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>
+                       <div style="margin-top:6px;padding:4px 8px;background:#C8E6C9;border-radius:6px;font-size:12px;font-weight:bold">${s.health}</div>` },
+      soil_moisture: { icon: '🟤', name: 'Soil Moisture', bg: '#EFEBE9',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>
+                       <div style="margin-top:6px;padding:4px 8px;background:#D7CCC8;border-radius:6px;font-size:12px;font-weight:bold">${s.status}</div>` },
+      land_surface_temp: { icon: '🌡️', name: 'Land Surface Temperature', bg: '#FBE9E7',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min}°C | Max: ${s.max}°C</div>` },
+      ndwi: { icon: '🌊', name: 'Water / Flood Index (NDWI)', bg: '#E0F7FA',
+        render: s => `<div class="stat-value">${s.mean} <span style="font-size:13px">${s.unit}</span></div>
+                       <div class="stat-range">Min: ${s.min} | Max: ${s.max}</div>
+                       <div style="margin-top:6px;padding:4px 8px;background:#B2EBF2;border-radius:6px;font-size:12px;font-weight:bold">${s.status}</div>` }
+    };
 
-    // ── Harvest summary card ──────────────────────────────────────────────
-    const hs = data.harvest_summary;
-    if (hs && hs.adjusted_harvest_date) {
-      const confColor   = escapeHtml(hs.harvest_confidence_color || '#9E9E9E');
-      const rdColor     = escapeHtml(hs.readiness_color          || '#757575');
-      const rdStatus    = (hs.readiness_status || 'unknown').replace(/_/g, ' ').toUpperCase();
-      let hsHtml = `
-        <div class="card" style="margin-top:14px;padding:16px">
-          <div style="font-weight:bold;color:#1B5E20;margin-bottom:10px">🌾 Harvest Summary</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div class="fert-summary-box">
-              <span class="fsv">${escapeHtml(formatDate(hs.adjusted_harvest_date))}</span>
-              <span class="fsk">Target Harvest</span>
-            </div>
-            <div class="fert-summary-box">
-              <span class="fsv" style="color:${rdColor}">${escapeHtml(rdStatus)}</span>
-              <span class="fsk">Readiness</span>
-            </div>
-            <div class="fert-summary-box">
-              <span class="fsv" style="color:${confColor}">${hs.harvest_confidence != null ? escapeHtml(String(hs.harvest_confidence)) + '%' : '—'}</span>
-              <span class="fsk">Confidence</span>
-            </div>
-          </div>`;
-
-      if (hs.readiness_message) {
-        const boxClass = hs.readiness_status === 'harvest_now' ? 'green'
-                       : hs.readiness_status === 'overdue'    ? 'orange'
-                       : 'blue';
-        hsHtml += `<div class="info-box ${boxClass}" style="margin-top:10px">${escapeHtml(hs.readiness_message)}</div>`;
-      }
-
-      // early_harvest_alert (mapped from early_alert in service)
-      const ea = hs.early_harvest_alert;
-      if (ea && ea.message) {
-        const pillClass = ea.type === 'CRITICAL' ? 'danger' : 'warn';
-        hsHtml += `<div class="alert-pill ${pillClass}" style="margin-top:8px;display:inline-block">
-          ⚠️ ${escapeHtml(ea.message)}
-          ${ea.suggested_date ? ' — suggested: ' + escapeHtml(formatDate(ea.suggested_date)) : ''}
+    let html = '';
+    layerKeys.forEach(key => {
+      const cfg = cardConfig[key];
+      if (!cfg) return;
+      if (data[key] && !data[key].error) {
+        html += `<div class="land-stat-card" style="background:${cfg.bg}">
+          <h4>${cfg.icon} ${cfg.name}</h4>
+          ${cfg.render(data[key].stats)}
+          <div class="stat-desc">${data[key].description}</div>
+        </div>`;
+      } else if (data[key] && data[key].error) {
+        html += `<div class="land-stat-card" style="background:#FFEBEE;border-color:#EF9A9A">
+          <h4>${cfg.icon} ${cfg.name}</h4>
+          <div style="color:#C62828;font-size:13px">${data[key].error}</div>
         </div>`;
       }
+    });
 
-      hsHtml += '</div>';
-      document.getElementById('cal-harvest-summary').innerHTML = hsHtml;
-    }
+    statsEl.innerHTML = html;
+    statsEl.style.display = 'grid';
 
-    // ── 30-day timeline ───────────────────────────────────────────────────
-    let tlHtml = '<div style="margin-top:18px">'
-               + '<div style="font-weight:bold;color:#1B5E20;font-size:15px;margin-bottom:10px">'
-               + '📅 30-Day Timeline</div>';
-    days.forEach(day => { tlHtml += renderCalendarDay(day); });
-    tlHtml += '</div>';
-    document.getElementById('cal-timeline').innerHTML = tlHtml;
-
-  } catch (e) {
-    setStatus('cal-status', '❌ Network error: ' + escapeHtml(e.message), 'error');
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'status-bar error';
   } finally {
-    btn.disabled = false;
+    btn.disabled = !drawnPolygonCoords;
   }
 }
 
-function renderCalendarDay(day) {
-  const dateStr   = escapeHtml(formatDate(day.date));
-  const zone      = day.zone || 'estimated';
-  const events    = day.events || [];
-  const alerts    = day.alerts || [];
-  const hasEvents = events.length > 0;
-  const confColor = escapeHtml(day.confidence_color || '#9E9E9E');
+function toggleLayer(key, btn) {
+  if (!geeLayers[key]) return;
+  const wasActive = btn.classList.contains('active');
 
-  // Header
-  let html = `<div class="cal-day-card ${zone}${hasEvents ? ' has-events' : ''}">`;
-  html += `<div class="day-card-top">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="day-num-badge">#${day.day_number}</span>
-      <div>
-        <div class="day-date-label">${dateStr}</div>
-        <div style="font-size:11px;color:#9E9E9E">
-          <span class="zone-dot ${zone}"></span>
-          <span class="day-zone-tag ${zone}">${escapeHtml(zone)}</span>
-          &nbsp;·&nbsp;
-          <span style="color:${confColor}">${day.confidence != null ? escapeHtml(String(day.confidence)) + '%' : '—'}</span>
-          ${day.is_crisis ? ' &nbsp;<span class="alert-pill danger" style="font-size:10px">CRISIS</span>' : ''}
-        </div>
-      </div>
-    </div>`;
+  // Remove all layers and deactivate all buttons
+  Object.values(geeLayers).forEach(layer => {
+    if (landMap.hasLayer(layer)) landMap.removeLayer(layer);
+  });
+  document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
 
-  // Weather compact row
-  const w = day.weather || {};
-  html += `<div style="font-size:12px;color:#757575;text-align:right">
-    ${escapeHtml(w.weather_icon || '')} ${escapeHtml(w.weather_label || '')}
-    <br>${w.temp_min != null ? escapeHtml(String(w.temp_min)) : '—'}–${w.temp_max != null ? escapeHtml(String(w.temp_max)) : '—'}°C
-    &nbsp;·&nbsp;${w.rainfall_mm != null ? escapeHtml(String(w.rainfall_mm)) : '0'}mm
-    &nbsp;·&nbsp;${w.humidity != null ? escapeHtml(String(w.humidity)) : '—'}% hum
-  </div>`;
-
-  html += '</div>'; // end day-card-top
-
-  // Events section
-  if (hasEvents) {
-    html += '<div style="margin-top:8px">';
-    events.forEach(evt => {
-      html += _renderCalEvent(evt);
-    });
-    html += '</div>';
-  } else {
-    html += '<div style="font-size:11px;color:#BDBDBD;margin-top:6px">No events today</div>';
+  // If it wasn't active, show this one layer
+  if (!wasActive) {
+    landMap.addLayer(geeLayers[key]);
+    btn.classList.add('active');
   }
-
-  // Alerts section (accurate zone only — service guarantees this but double-check)
-  if (alerts.length > 0 && zone === 'accurate') {
-    html += '<div style="margin-top:6px">';
-    alerts.forEach(al => {
-      html += `<div class="cal-alert-row ${escapeHtml(al.type || 'WARNING')}">
-        ${al.type === 'CRITICAL' ? '🚨' : '⚠️'} ${escapeHtml(al.message || '')}
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  html += '</div>'; // end cal-day-card
-  return html;
 }
 
-function _renderCalEvent(evt) {
-  var t = evt.type || '';
-  var h = '';
-
-  if (t === 'plant') {
-    h  = '<div class="cal-event-row" style="border-left:3px solid #2E7D32">';
-    h += '&#x1F331; <b>Plant Window</b>';
-    h += evt.label ? ' &middot; ' + escapeHtml(evt.label) : '';
-    h += evt.score != null ? ' (score ' + escapeHtml(String(evt.score)) + ')' : '';
-    h += evt.best_time
-      ? '<div style="font-size:11px;color:#757575">Best time: ' + escapeHtml(evt.best_time) + '</div>'
-      : '';
-    h += '</div>';
-    return h;
+// Initialize map when tab is shown
+const origShowTab = showTab;
+showTab = function(name) {
+  origShowTab(name);
+  if (name === 'landanalysis') {
+    setTimeout(() => {
+      initLandMap();
+      landMap.invalidateSize();
+    }, 100);
   }
-
-  if (t === 'fertilize') {
-    var fertOk    = evt.should_fertilize !== false;
-    var fertColor = fertOk ? '#1565C0' : '#E65100';
-    h  = '<div class="cal-event-row" style="border-left:3px solid ' + fertColor + '">';
-    h += '&#x1F48A; <b>Fertilize</b>';
-    h += fertOk ? '' : ' <span class="fert-skip-reason">SKIP</span>';
-    h += evt.fertilizer_type ? ' &middot; ' + escapeHtml(evt.fertilizer_type) : '';
-    h += evt.amount          ? ' &middot; ' + escapeHtml(evt.amount)           : '';
-    h += evt.growth_stage
-      ? '<div style="font-size:11px;color:#757575">Stage: '
-        + escapeHtml(evt.growth_stage.replace(/_/g, ' ')) + '</div>'
-      : '';
-    h += (!fertOk && evt.skip_reason)
-      ? '<div style="font-size:11px;color:#E65100">' + escapeHtml(evt.skip_reason) + '</div>'
-      : '';
-    h += '</div>';
-    return h;
-  }
-
-  if (t === 'pesticide') {
-    var spray       = evt.status === 'spray';
-    var pestColor   = spray ? '#7B1FA2' : (evt.status === 'delay' ? '#E65100' : '#9E9E9E');
-    var sprayBadge  = spray ? 'pest-badge-spray' : 'pest-badge-delay';
-    var riskLevel   = (evt.overall_risk || 'low').toLowerCase();
-    var riskClass   = 'risk-' + riskLevel;
-    h  = '<div class="cal-event-row" style="border-left:3px solid ' + pestColor + '">';
-    h += '&#x1F9EA; <b>Pesticide</b> &middot; <span class="' + sprayBadge + '">'
-      + escapeHtml(evt.status || '') + '</span>';
-    h += evt.dominant_type
-      ? ' &middot; Risk: <span class="' + riskClass + '">' + escapeHtml(evt.dominant_type) + '</span>'
-      : '';
-    h += '</div>';
-    return h;
-  }
-
-  if (t === 'harvest') {
-    var immediate   = evt.urgency === 'immediate' || !!evt.crisis_urgency;
-    var good        = evt.good !== false;
-    var harvColor   = immediate ? '#B71C1C' : (good ? '#2E7D32' : '#E65100');
-    h  = '<div class="cal-event-row" style="border-left:3px solid ' + harvColor + '">';
-    h += '&#x1F33E; <b>' + (immediate ? 'Harvest Now!' : 'Harvest Window') + '</b>';
-    h += evt.score != null ? ' &middot; Score: ' + escapeHtml(String(evt.score)) + '/100' : '';
-    h += immediate
-      ? ' <span class="alert-pill danger" style="font-size:10px">URGENT</span>'
-      : '';
-    h += evt.message
-      ? '<div style="font-size:11px;color:' + harvColor + '">' + escapeHtml(evt.message) + '</div>'
-      : '';
-    h += '</div>';
-    return h;
-  }
-
-  if (t === 'crisis_advisory') {
-    h  = '<div class="cal-event-row" style="border-left:3px solid #B71C1C;background:#FFEBEE">';
-    h += '&#x1F6A8; <b>Crisis Advisory</b>';
-    h += '<div style="font-size:11px;color:#B71C1C">' + escapeHtml(evt.message || '') + '</div>';
-    h += (evt.safe_crops && evt.safe_crops.length)
-      ? '<div style="font-size:11px;color:#424242">Safe crops: '
-        + escapeHtml(evt.safe_crops.join(', ')) + '</div>'
-      : '';
-    h += '</div>';
-    return h;
-  }
-
-  // Fallback
-  return '<div class="cal-event-row" style="border-left:3px solid #9E9E9E">'
-       + escapeHtml(evt.message || t) + '</div>';
-}
+};
 </script>
 </body>
 </html>
