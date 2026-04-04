@@ -993,6 +993,41 @@
   background: #2E7D32;
   transition: width 0.3s;
 }
+
+/* ── GrowBuddy Calendar ────────────────────────────── */
+.cal-day-card {
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  border: 1px solid #E0E0E0;
+  background: #FAFAFA;
+}
+.cal-day-card.accurate  { background: #FAFFFE; border-color: #C8E6C9; }
+.cal-day-card.predicted { background: #F8FBFF; border-color: #BBDEFB; }
+.cal-day-card.estimated { background: #FAFAFA; border-color: #E0E0E0; }
+.cal-day-card.has-events { border-left: 4px solid currentColor; }
+.cal-day-card.has-events.accurate  { border-left-color: #2E7D32; }
+.cal-day-card.has-events.predicted { border-left-color: #1565C0; }
+.cal-day-card.has-events.estimated { border-left-color: #9E9E9E; }
+
+.cal-event-row {
+  font-size: 12px;
+  color: #424242;
+  padding: 5px 8px;
+  margin-top: 4px;
+  border-radius: 0 6px 6px 0;
+  background: #F5F5F5;
+  line-height: 1.5;
+}
+.cal-alert-row {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 5px 10px;
+  margin-top: 4px;
+  border-radius: 6px;
+}
+.cal-alert-row.CRITICAL { background: #FFEBEE; color: #B71C1C; }
+.cal-alert-row.WARNING  { background: #FFF3E0; color: #E65100; }
   </style>
 </head>
 <body>
@@ -1024,6 +1059,7 @@
     <div class="tab" onclick="showTab('pesticide')">🧪 Pesticide</div>
     <div class="tab" onclick="showTab('harvest')">🌾 Harvest</div>
     <div class="tab" onclick="showTab('crisis')">🚨 Crisis</div>
+    <div class="tab" onclick="showTab('calendar')">📆 GrowBuddy</div>
     <div class="tab" onclick="showTab('map'); if(window.initMapIfNeeded) setTimeout(initMapIfNeeded, 150);">🗺️ Farm Map</div>
   </div>
 
@@ -1298,6 +1334,13 @@
     </div>
 
     <div class="form-group">
+      <label>Load Active Crop</label>
+      <select id="plant-active-crop" onchange="fillPlantFromCrop()">
+        <option value="">— Select from My Crops —</option>
+      </select>
+    </div>
+
+    <div class="form-group">
       <label>Crop Name</label>
       <input type="text" id="plant-crop" placeholder="e.g. Kangkung — optional"/>
     </div>
@@ -1523,6 +1566,74 @@
   </div>
 </div>
 
+<!-- ══ GROWBUDDY CALENDAR ════════════════════════════════════ -->
+<div class="section" id="tab-calendar">
+  <div class="card">
+    <h2>📆 GrowBuddy 30-Day Calendar</h2>
+
+    <div class="info-box blue">
+      Your unified 30-day planting, fertilizing, pesticide, and harvest
+      timeline in one view. Select an active crop or enter crop details manually.
+    </div>
+
+    <!-- Crisis / warning banner — shown by JS when active -->
+    <div id="cal-crisis-banner" style="display:none"></div>
+
+    <!-- Zone legend -->
+    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;
+                color:#757575;margin-bottom:14px">
+      <span><span class="zone-dot accurate"></span> Accurate (days 1–6, real forecast)</span>
+      <span><span class="zone-dot predicted"></span> Predicted (days 7–14, ARIMA)</span>
+      <span><span class="zone-dot estimated"></span> Estimated (days 15–30, ARIMA)</span>
+    </div>
+
+    <div class="form-group">
+      <label>Farm Profile</label>
+      <select id="cal-profile">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Load Active Crop</label>
+      <select id="cal-active-crop" onchange="fillCalFromCrop()">
+        <option value="">— Select from My Crops —</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Crop Name</label>
+      <input type="text" id="cal-crop" placeholder="e.g. Tomato"/>
+    </div>
+
+    <div class="form-group">
+      <label>Planted Date
+        <span style="font-size:11px;color:#757575">
+          (leave blank if not yet planted)
+        </span>
+      </label>
+      <input type="date" id="cal-planted"/>
+    </div>
+
+    <div class="form-group">
+      <label>Growth Duration (days)</label>
+      <input type="number" id="cal-duration" value="30" min="7" max="365"/>
+    </div>
+
+    <button class="btn" onclick="getGrowBuddyCalendar()" id="btn-calendar">
+      Build My 30-Day Calendar →
+    </button>
+
+    <div class="status-bar" id="cal-status"></div>
+
+    <!-- Harvest summary (populated by JS) -->
+    <div id="cal-harvest-summary"></div>
+
+    <!-- 30-day timeline (populated by JS) -->
+    <div id="cal-timeline"></div>
+  </div>
+</div>
+
 <!-- ══ MY CROPS ══════════════════════════════════════════════ -->
 <div class="section" id="tab-mycrops">
   <div class="card">
@@ -1659,7 +1770,7 @@ function showTab(name) {
 
   const order = [
   'register','login','profile','view','mycrops',
-  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis'
+  'weather','recommend','guide','planting','fertilize','pesticide','harvest','crisis','calendar'
 ];
   const idx   = order.indexOf(name);
   if (idx >= 0) {
@@ -1675,6 +1786,7 @@ function showTab(name) {
   if (name === 'pesticide') loadProfilesForPesticide();
   if (name === 'harvest') loadProfilesForHarvest();
   if (name === 'crisis') loadProfilesForCrisis();
+  if (name === 'calendar') loadCalendarCrops();
   if (name === 'mycrops') loadMyCrops();
   updateAuthNote();
 }
@@ -2293,7 +2405,7 @@ async function getWeather() {
             <div class="conf-label-row">
               <span style="color:#757575">Forecast confidence</span>
               <span style="color:${confColor};font-weight:bold">
-                ${d.confidence_label}
+                ${d.confidence}%
               </span>
             </div>
             <div class="conf-track">
@@ -2304,22 +2416,7 @@ async function getWeather() {
             </div>
           </div>
 
-          <!-- Farming score bar -->
-          <div class="farm-score-row">
-            <span style="font-size:11px;color:#757575;min-width:80px">
-              Farm score
-            </span>
-            <div class="farm-score-track">
-              <div class="farm-score-fill"
-                   style="width:${d.farming_score}%;
-                          background:${farmColor}">
-              </div>
-            </div>
-            <span style="font-size:11px;font-weight:bold;
-                         color:${farmColor};min-width:24px">
-              ${d.farming_score}
-            </span>
-          </div>
+
 
           <!-- Extra chips row -->
           <div class="day-extra-row">
@@ -3026,6 +3123,59 @@ async function loadProfilesForPlanting() {
     document.getElementById('plant-profile').innerHTML =
       '<option value="">Failed to load</option>';
   }
+
+  // Load active crops dropdown
+  await loadActiveCropsForPlanting();
+
+  // Auto-fill from My Crops if available
+  if (_activeCropName) {
+    document.getElementById('plant-crop').value = _activeCropName;
+  }
+}
+
+async function loadActiveCropsForPlanting() {
+  try {
+    const res  = await fetch(API+'/api/planting-logs/active', {headers:hdrs()});
+    const data = await res.json();
+    const sel  = document.getElementById('plant-active-crop');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select from My Crops —</option>';
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(log => {
+        const o = document.createElement('option');
+        o.value = JSON.stringify({
+          crop_name:    log.crop_name,
+          planted_date: log.planted_date
+        });
+        o.textContent = log.crop_name
+          + ' — planted '
+          + log.planted_date
+          + ' ('
+          + log.days_since_planted
+          + 'd ago)';
+        sel.appendChild(o);
+      });
+    }
+  } catch(e) {
+    console.error('Cannot load active crops', e);
+  }
+}
+
+function fillPlantFromCrop() {
+  const sel = document.getElementById('plant-active-crop');
+  if (!sel || !sel.value) return;
+  try {
+    const data = JSON.parse(sel.value);
+    document.getElementById('plant-crop').value = data.crop_name;
+    
+    // Also auto-fill 'planted' if it's there
+    let plantedSelect = document.getElementById('plant-planted');
+    if (plantedSelect) {
+      plantedSelect.value = 'yes';
+    }
+  } catch(e) {
+    console.error('Parse error', e);
+  }
 }
 
 // ── Load profiles for fertilize dropdown ───────────────────────
@@ -3333,7 +3483,7 @@ async function getFertilizeSchedule() {
       if (z) {
         calHtml += '<div style="margin-top:6px;font-size:10px;color:#9E9E9E">' +
           '<span class="zone-dot ' + z + '"></span>' +
-          escapeHtml(d.confidence_label || d.zone || '') +
+          '<span style="color:' + escapeHtml(d.confidence_color || '#9E9E9E') + '">' + (d.confidence != null ? escapeHtml(d.confidence) + '%' : '') + '</span>' +
           '</div>';
       }
       calHtml += '</div>';
@@ -3659,7 +3809,7 @@ async function getPesticideSchedule() {
           'Rain ' + (ws.rain_probability != null ? ws.rain_probability : '—')
           + '%</div>' +
           '<div style="font-size:10px;color:#9E9E9E;margin-top:2px">' +
-          escapeHtml(d.confidence_label || '') + '</div>' +
+          '<div style="font-size:10px;margin-top:2px;font-weight:bold;color:' + escapeHtml(d.confidence_color || '#9E9E9E') + '">' + (d.confidence != null ? escapeHtml(d.confidence) + '%' : '') + '</div>' +
           '<div class="pest-confidence-bar">' +
           '<div class="pest-confidence-fill" style="width:' + conf + '%">' +
           '</div></div>' +
@@ -5332,6 +5482,359 @@ async function analyzeFarmMap(polygon) {
     sb.className = 'status-bar show error';
     sb.innerText = err.message;
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GrowBuddy 30-Day Calendar
+// ══════════════════════════════════════════════════════════════
+
+async function loadCalendarCrops() {
+  if (!token) return;
+
+  // Farm profiles
+  try {
+    const res  = await fetch(API + '/api/profile/farms', { headers: hdrs() });
+    const data = await res.json();
+    const sel  = document.getElementById('cal-profile');
+    sel.innerHTML = '';
+    if (data.success && data.data && data.data.length > 0) {
+      data.data.forEach(p => {
+        const o = document.createElement('option');
+        o.value       = p.id;
+        o.textContent = p.region_name + ' — ' + p.land_size + ' ' + p.land_size_unit
+                        + ' (' + (p.soil_type || 'unknown soil') + ')';
+        if (p.is_default) o.selected = true;
+        sel.appendChild(o);
+      });
+    } else {
+      sel.innerHTML = '<option value="">No profiles yet</option>';
+    }
+  } catch (e) {
+    document.getElementById('cal-profile').innerHTML =
+      '<option value="">Failed to load profiles</option>';
+  }
+
+  // Active crops
+  try {
+    const res  = await fetch(API + '/api/planting-logs/active', { headers: hdrs() });
+    const data = await res.json();
+    const sel  = document.getElementById('cal-active-crop');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select from My Crops —</option>';
+    if (data.success && data.data && data.data.length > 0) {
+      data.data.forEach(log => {
+        const o = document.createElement('option');
+        o.value = JSON.stringify({
+          crop_name:            log.crop_name,
+          planted_date:         log.planted_date,
+          growth_duration_days: log.growth_duration_days || 30,
+          farm_profile_id:      log.farm_profile_id
+        });
+        o.textContent = log.crop_name + ' — planted ' + log.planted_date
+                        + ' (' + (log.days_since_planted || 0) + 'd ago)';
+        sel.appendChild(o);
+      });
+    }
+  } catch (e) {
+    console.error('loadCalendarCrops active crops error', e);
+  }
+}
+
+function fillCalFromCrop() {
+  const sel = document.getElementById('cal-active-crop');
+  if (!sel || !sel.value) return;
+  try {
+    const data = JSON.parse(sel.value);
+    document.getElementById('cal-crop').value     = data.crop_name    || '';
+    document.getElementById('cal-planted').value  = data.planted_date || '';
+    document.getElementById('cal-duration').value = data.growth_duration_days || 30;
+    if (data.farm_profile_id) {
+      document.getElementById('cal-profile').value = data.farm_profile_id;
+    }
+  } catch (e) {
+    console.error('fillCalFromCrop parse error', e);
+  }
+}
+
+async function getGrowBuddyCalendar() {
+  const btn = document.getElementById('btn-calendar');
+  clearStatus('cal-status');
+  document.getElementById('cal-harvest-summary').innerHTML = '';
+  document.getElementById('cal-timeline').innerHTML        = '';
+  document.getElementById('cal-crisis-banner').style.display = 'none';
+
+  if (!token) {
+    setStatus('cal-status', '⚠️ Please login first', 'error');
+    return;
+  }
+
+  const pid      = document.getElementById('cal-profile').value;
+  const cropName = document.getElementById('cal-crop').value.trim();
+
+  if (!pid)      { setStatus('cal-status', '⚠️ Select a farm profile', 'error'); return; }
+  if (!cropName) { setStatus('cal-status', '⚠️ Enter a crop name', 'error');     return; }
+
+  const planted  = document.getElementById('cal-planted').value  || null;
+  const duration = parseInt(document.getElementById('cal-duration').value) || 30;
+
+  btn.disabled = true;
+  setStatus('cal-status', '⏳ Building your 30-day GrowBuddy Calendar…', 'loading');
+
+  try {
+    const res = await fetch(API + '/api/calendar', {
+      method:  'POST',
+      headers: hdrs(),
+      body:    JSON.stringify({
+        profile_id:           pid,
+        crop_name:            cropName,
+        planted_date:         planted,
+        growth_duration_days: duration
+      })
+    });
+
+    const text = await res.text();
+    let data;
+    try { data = text ? JSON.parse(text) : {}; }
+    catch {
+      setStatus('cal-status', '❌ Invalid server response (HTTP ' + res.status + ')', 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    if (!res.ok || !data.success) {
+      let detail = data && (data.detail || data.message);
+      if (detail != null && typeof detail !== 'string') {
+        try { detail = JSON.stringify(detail); } catch { detail = String(detail); }
+      }
+      setStatus('cal-status', '❌ ' + (detail || ('HTTP ' + res.status)), 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    const days = data.calendar || [];
+    setStatus('cal-status',
+      '✅ Calendar ready — ' + days.length + ' days generated',
+      'success');
+
+    // ── Crisis / warning banner ───────────────────────────────────────────
+    const crisis = data.crisis_status;
+    if (crisis && crisis.mode !== 'NORMAL') {
+      const banner = document.getElementById('cal-crisis-banner');
+      const isCrisis = crisis.mode === 'CRISIS';
+      banner.className = 'crisis-banner ' + (isCrisis ? 'crisis' : 'warning');
+      banner.style.display = 'block';
+      const triggers = (crisis.triggers || []).join(', ');
+      banner.innerHTML =
+        '<b>' + (isCrisis ? '🚨 Crisis Mode Active' : '⚠️ Weather Warning') + '</b>'
+        + ' — Risk Score ' + crisis.risk_score + '/100'
+        + (triggers ? '<div style="font-size:12px;margin-top:4px">' + escapeHtml(triggers) + '</div>' : '');
+    }
+
+    // ── Harvest summary card ──────────────────────────────────────────────
+    const hs = data.harvest_summary;
+    if (hs && hs.adjusted_harvest_date) {
+      const confColor   = escapeHtml(hs.harvest_confidence_color || '#9E9E9E');
+      const rdColor     = escapeHtml(hs.readiness_color          || '#757575');
+      const rdStatus    = (hs.readiness_status || 'unknown').replace(/_/g, ' ').toUpperCase();
+      let hsHtml = `
+        <div class="card" style="margin-top:14px;padding:16px">
+          <div style="font-weight:bold;color:#1B5E20;margin-bottom:10px">🌾 Harvest Summary</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="fert-summary-box">
+              <span class="fsv">${escapeHtml(formatDate(hs.adjusted_harvest_date))}</span>
+              <span class="fsk">Target Harvest</span>
+            </div>
+            <div class="fert-summary-box">
+              <span class="fsv" style="color:${rdColor}">${escapeHtml(rdStatus)}</span>
+              <span class="fsk">Readiness</span>
+            </div>
+            <div class="fert-summary-box">
+              <span class="fsv" style="color:${confColor}">${hs.harvest_confidence != null ? escapeHtml(String(hs.harvest_confidence)) + '%' : '—'}</span>
+              <span class="fsk">Confidence</span>
+            </div>
+          </div>`;
+
+      if (hs.readiness_message) {
+        const boxClass = hs.readiness_status === 'harvest_now' ? 'green'
+                       : hs.readiness_status === 'overdue'    ? 'orange'
+                       : 'blue';
+        hsHtml += `<div class="info-box ${boxClass}" style="margin-top:10px">${escapeHtml(hs.readiness_message)}</div>`;
+      }
+
+      // early_harvest_alert (mapped from early_alert in service)
+      const ea = hs.early_harvest_alert;
+      if (ea && ea.message) {
+        const pillClass = ea.type === 'CRITICAL' ? 'danger' : 'warn';
+        hsHtml += `<div class="alert-pill ${pillClass}" style="margin-top:8px;display:inline-block">
+          ⚠️ ${escapeHtml(ea.message)}
+          ${ea.suggested_date ? ' — suggested: ' + escapeHtml(formatDate(ea.suggested_date)) : ''}
+        </div>`;
+      }
+
+      hsHtml += '</div>';
+      document.getElementById('cal-harvest-summary').innerHTML = hsHtml;
+    }
+
+    // ── 30-day timeline ───────────────────────────────────────────────────
+    let tlHtml = '<div style="margin-top:18px">'
+               + '<div style="font-weight:bold;color:#1B5E20;font-size:15px;margin-bottom:10px">'
+               + '📅 30-Day Timeline</div>';
+    days.forEach(day => { tlHtml += renderCalendarDay(day); });
+    tlHtml += '</div>';
+    document.getElementById('cal-timeline').innerHTML = tlHtml;
+
+  } catch (e) {
+    setStatus('cal-status', '❌ Network error: ' + escapeHtml(e.message), 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderCalendarDay(day) {
+  const dateStr   = escapeHtml(formatDate(day.date));
+  const zone      = day.zone || 'estimated';
+  const events    = day.events || [];
+  const alerts    = day.alerts || [];
+  const hasEvents = events.length > 0;
+  const confColor = escapeHtml(day.confidence_color || '#9E9E9E');
+
+  // Header
+  let html = `<div class="cal-day-card ${zone}${hasEvents ? ' has-events' : ''}">`;
+  html += `<div class="day-card-top">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="day-num-badge">#${day.day_number}</span>
+      <div>
+        <div class="day-date-label">${dateStr}</div>
+        <div style="font-size:11px;color:#9E9E9E">
+          <span class="zone-dot ${zone}"></span>
+          <span class="day-zone-tag ${zone}">${escapeHtml(zone)}</span>
+          &nbsp;·&nbsp;
+          <span style="color:${confColor}">${day.confidence != null ? escapeHtml(String(day.confidence)) + '%' : '—'}</span>
+          ${day.is_crisis ? ' &nbsp;<span class="alert-pill danger" style="font-size:10px">CRISIS</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+
+  // Weather compact row
+  const w = day.weather || {};
+  html += `<div style="font-size:12px;color:#757575;text-align:right">
+    ${escapeHtml(w.weather_icon || '')} ${escapeHtml(w.weather_label || '')}
+    <br>${w.temp_min != null ? escapeHtml(String(w.temp_min)) : '—'}–${w.temp_max != null ? escapeHtml(String(w.temp_max)) : '—'}°C
+    &nbsp;·&nbsp;${w.rainfall_mm != null ? escapeHtml(String(w.rainfall_mm)) : '0'}mm
+    &nbsp;·&nbsp;${w.humidity != null ? escapeHtml(String(w.humidity)) : '—'}% hum
+  </div>`;
+
+  html += '</div>'; // end day-card-top
+
+  // Events section
+  if (hasEvents) {
+    html += '<div style="margin-top:8px">';
+    events.forEach(evt => {
+      html += _renderCalEvent(evt);
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="font-size:11px;color:#BDBDBD;margin-top:6px">No events today</div>';
+  }
+
+  // Alerts section (accurate zone only — service guarantees this but double-check)
+  if (alerts.length > 0 && zone === 'accurate') {
+    html += '<div style="margin-top:6px">';
+    alerts.forEach(al => {
+      html += `<div class="cal-alert-row ${escapeHtml(al.type || 'WARNING')}">
+        ${al.type === 'CRITICAL' ? '🚨' : '⚠️'} ${escapeHtml(al.message || '')}
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '</div>'; // end cal-day-card
+  return html;
+}
+
+function _renderCalEvent(evt) {
+  var t = evt.type || '';
+  var h = '';
+
+  if (t === 'plant') {
+    h  = '<div class="cal-event-row" style="border-left:3px solid #2E7D32">';
+    h += '&#x1F331; <b>Plant Window</b>';
+    h += evt.label ? ' &middot; ' + escapeHtml(evt.label) : '';
+    h += evt.score != null ? ' (score ' + escapeHtml(String(evt.score)) + ')' : '';
+    h += evt.best_time
+      ? '<div style="font-size:11px;color:#757575">Best time: ' + escapeHtml(evt.best_time) + '</div>'
+      : '';
+    h += '</div>';
+    return h;
+  }
+
+  if (t === 'fertilize') {
+    var fertOk    = evt.should_fertilize !== false;
+    var fertColor = fertOk ? '#1565C0' : '#E65100';
+    h  = '<div class="cal-event-row" style="border-left:3px solid ' + fertColor + '">';
+    h += '&#x1F48A; <b>Fertilize</b>';
+    h += fertOk ? '' : ' <span class="fert-skip-reason">SKIP</span>';
+    h += evt.fertilizer_type ? ' &middot; ' + escapeHtml(evt.fertilizer_type) : '';
+    h += evt.amount          ? ' &middot; ' + escapeHtml(evt.amount)           : '';
+    h += evt.growth_stage
+      ? '<div style="font-size:11px;color:#757575">Stage: '
+        + escapeHtml(evt.growth_stage.replace(/_/g, ' ')) + '</div>'
+      : '';
+    h += (!fertOk && evt.skip_reason)
+      ? '<div style="font-size:11px;color:#E65100">' + escapeHtml(evt.skip_reason) + '</div>'
+      : '';
+    h += '</div>';
+    return h;
+  }
+
+  if (t === 'pesticide') {
+    var spray       = evt.status === 'spray';
+    var pestColor   = spray ? '#7B1FA2' : (evt.status === 'delay' ? '#E65100' : '#9E9E9E');
+    var sprayBadge  = spray ? 'pest-badge-spray' : 'pest-badge-delay';
+    var riskLevel   = (evt.overall_risk || 'low').toLowerCase();
+    var riskClass   = 'risk-' + riskLevel;
+    h  = '<div class="cal-event-row" style="border-left:3px solid ' + pestColor + '">';
+    h += '&#x1F9EA; <b>Pesticide</b> &middot; <span class="' + sprayBadge + '">'
+      + escapeHtml(evt.status || '') + '</span>';
+    h += evt.dominant_type
+      ? ' &middot; Risk: <span class="' + riskClass + '">' + escapeHtml(evt.dominant_type) + '</span>'
+      : '';
+    h += '</div>';
+    return h;
+  }
+
+  if (t === 'harvest') {
+    var immediate   = evt.urgency === 'immediate' || !!evt.crisis_urgency;
+    var good        = evt.good !== false;
+    var harvColor   = immediate ? '#B71C1C' : (good ? '#2E7D32' : '#E65100');
+    h  = '<div class="cal-event-row" style="border-left:3px solid ' + harvColor + '">';
+    h += '&#x1F33E; <b>' + (immediate ? 'Harvest Now!' : 'Harvest Window') + '</b>';
+    h += evt.score != null ? ' &middot; Score: ' + escapeHtml(String(evt.score)) + '/100' : '';
+    h += immediate
+      ? ' <span class="alert-pill danger" style="font-size:10px">URGENT</span>'
+      : '';
+    h += evt.message
+      ? '<div style="font-size:11px;color:' + harvColor + '">' + escapeHtml(evt.message) + '</div>'
+      : '';
+    h += '</div>';
+    return h;
+  }
+
+  if (t === 'crisis_advisory') {
+    h  = '<div class="cal-event-row" style="border-left:3px solid #B71C1C;background:#FFEBEE">';
+    h += '&#x1F6A8; <b>Crisis Advisory</b>';
+    h += '<div style="font-size:11px;color:#B71C1C">' + escapeHtml(evt.message || '') + '</div>';
+    h += (evt.safe_crops && evt.safe_crops.length)
+      ? '<div style="font-size:11px;color:#424242">Safe crops: '
+        + escapeHtml(evt.safe_crops.join(', ')) + '</div>'
+      : '';
+    h += '</div>';
+    return h;
+  }
+
+  // Fallback
+  return '<div class="cal-event-row" style="border-left:3px solid #9E9E9E">'
+       + escapeHtml(evt.message || t) + '</div>';
 }
 </script>
 </body>

@@ -5,6 +5,7 @@ Generates pesticide spray schedule with risk detection and spray window validati
 from datetime import datetime, timedelta
 from collections import Counter
 from typing import Any, Dict, List, Optional
+from app.utils.confidence import weather_confidence
 
 
 def get_pesticide_events(
@@ -297,6 +298,19 @@ def get_pesticide_events(
             },
             "message": message,
         }
+
+        matching_day = next(
+            (d for d in forecast_30days if d["date"] == event["date"]),
+            None
+        )
+        if matching_day and "confidence" in matching_day:
+            event["confidence"] = matching_day["confidence"]
+            event["confidence_label"] = matching_day.get("confidence_label", "Medium")
+            event["confidence_color"] = matching_day.get("confidence_color", "yellow")
+        else:
+            event["confidence"] = 50
+            event["confidence_label"] = "Medium"
+            event["confidence_color"] = "yellow"
 
         daily.append(dict(event))
         if has_event:

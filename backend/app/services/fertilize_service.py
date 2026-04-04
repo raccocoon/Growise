@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, date
 from typing import Optional
+from app.utils.confidence import weather_confidence
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -270,6 +271,19 @@ def get_fertilize_events(
                 weather_check["skip_reason"]
             )
         }
+
+        matching_day = next(
+            (d for d in forecast_30days if d["date"] == event["date"]),
+            None
+        )
+        if matching_day and "confidence" in matching_day:
+            event["confidence"] = matching_day["confidence"]
+            event["confidence_label"] = matching_day.get("confidence_label", "Medium")
+            event["confidence_color"] = matching_day.get("confidence_color", "yellow")
+        else:
+            event["confidence"] = 50
+            event["confidence_label"] = "Medium"
+            event["confidence_color"] = "yellow"
 
         events.append(event)
         day_entry["has_event"]   = True

@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import httpx
 
+from app.utils.confidence import weather_confidence, check_consistency
+
 # ── Try importing ARIMA ───────────────────────────────────────────────────
 try:
     from pmdarima import auto_arima
@@ -13,10 +15,11 @@ except ImportError:
     print("WARNING: pmdarima not installed. Using simple average fallback.")
 
 # ── In-memory cache ───────────────────────────────────────────────────────
-_hist_cache       = {}
-_hist_timestamps  = {}
-_model_cache      = {}
-_model_timestamps = {}
+_hist_cache            = {}
+_hist_timestamps       = {}
+_model_cache           = {}
+_model_timestamps      = {}
+_crisis_weather_cache  = {}   # keyed by _rkey(lat, lng); set by debug router
 
 # ── Weather code map ──────────────────────────────────────────────────────
 WEATHER_CODES = {
@@ -421,6 +424,10 @@ async def get_weather(lat: float, lng: float) -> dict:
     today = datetime.now().date()
     rk    = _rkey(lat, lng)
 
+    # ── Crisis override (injected by debug router) ──────────────────
+    if rk in _crisis_weather_cache:
+        return _crisis_weather_cache[rk]
+
     # ── Fetch data ──────────────────────────────────────────────────
     fore_raw = await _fetch_forecast(lat, lng)
     hist_raw = await _fetch_historical(lat, lng)
@@ -488,7 +495,7 @@ async def get_weather(lat: float, lng: float) -> dict:
         all_rainfall.append(rainfall or 0)
         streak = _dry_streak(all_rainfall, len(all_rainfall))
 
-        score = _confidence(i + 1)
+        conf = weather_confidence(day_number=(i + 1))
         risk  = _risks(
             rainfall or 0,
             temp_max or 0,
@@ -505,8 +512,9 @@ async def get_weather(lat: float, lng: float) -> dict:
             "date":               (today + timedelta(days=i)).isoformat(),
             "day_number":         i + 1,
             "zone":               "accurate",
-            "confidence":         score,
-            "confidence_label":   _conf_label(score),
+            "confidence":         conf["score"],
+            "confidence_label":   conf["label"],
+            "confidence_color":   conf["color"],
             "temp_max":           temp_max,
             "temp_min":           temp_min,
             "rainfall_mm":        rainfall,
@@ -566,7 +574,20 @@ async def get_weather(lat: float, lng: float) -> dict:
             date.month
         )
 
-        score = _confidence(day_num, temp_ci, temp_max, norm)
+        consistent = check_consistency(
+            rainfall=rainfall,
+            humidity=humidity,
+            temp_max=temp_max
+        )
+
+        conf = weather_confidence(
+            day_number=day_num,
+            arima_upper=temp_ci[1] if temp_ci else None,
+            arima_lower=temp_ci[0] if temp_ci else None,
+            prediction=temp_max,
+            seasonal_norm=norm,
+            variables_consistent=consistent
+        )
         risk  = _risks(
             rainfall or 0,
             temp_max or 0,
@@ -586,8 +607,9 @@ async def get_weather(lat: float, lng: float) -> dict:
             "date":               date.isoformat(),
             "day_number":         day_num,
             "zone":               _zone(day_num),
-            "confidence":         score,
-            "confidence_label":   _conf_label(score),
+            "confidence":         conf["score"],
+            "confidence_label":   conf["label"],
+            "confidence_color":   conf["color"],
             "temp_max":           temp_max,
             "temp_min":           temp_min,
             "rainfall_mm":        rainfall,

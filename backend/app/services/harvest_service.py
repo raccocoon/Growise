@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, date
 import httpx
+from app.utils.confidence import harvest_confidence
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -266,6 +267,12 @@ async def get_harvest_prediction(
     delay_days       = stress_info["delay_rounded"]
     adjusted_harvest = base_harvest + timedelta(days=delay_days)
 
+    days_until = max(0, (adjusted_harvest - today).days)
+    conf = harvest_confidence(
+        days_until_harvest=days_until,
+        stress_delay_days=delay_days
+    )
+
     # ── Step 3: Harvest window ─────────────────────────────────
     window_start = adjusted_harvest - timedelta(days=2)
     window_end   = adjusted_harvest + timedelta(days=5)
@@ -306,8 +313,9 @@ async def get_harvest_prediction(
                 "score":            score,
                 "good":             score >= 60,
                 "zone":             day["zone"],
-                "confidence":       day["confidence"],
-                "confidence_label": day["confidence_label"],
+                "confidence":       day.get("confidence", 50),
+                "confidence_label": day.get("confidence_label", "Medium"),
+                "confidence_color": day.get("confidence_color", "yellow"),
                 "crisis_urgency":   crisis_mode
             })
 
@@ -412,6 +420,9 @@ async def get_harvest_prediction(
         "best_harvest_time_reason": time_reason,
         "window_days":         window_days,
         "harvest_events":      harvest_events,
+        "harvest_confidence":  conf["score"],
+        "harvest_confidence_label": conf["label"],
+        "harvest_confidence_color": conf["color"],
         "early_alert":         early_alert,
         "readiness":           readiness,
         "daily":               daily,

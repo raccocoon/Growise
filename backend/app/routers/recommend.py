@@ -141,5 +141,7 @@ async def recommend(
         "weather_summary": weather_summary,
         "crisis_mode":     effective_crisis_mode,
         "crisis_status":   crisis,
-        "recommendations": result.get("recommendations", [])
+        "recommendations": result.get("recommendations", []),
+        "ai_source":       result.get("ai_source", "preset"),
+        "rate_limited":    result.get("rate_limited", False),
     }

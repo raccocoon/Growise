@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from app.services.supabase_client import supabase
 from app.services.weather_service import get_weather
-from app.services.ai_service import get_planting_guide
+from app.services.ai_service import get_planting_guide, _guide_cache, _guide_timestamps
 from datetime import datetime
 import numpy as np
 
@@ -50,6 +50,13 @@ class GuideRequest(BaseModel):
     estimated_cost_myr:   float = 0
     expected_yield:       str = ""
     confidence:           int = 0
+
+
+@router.delete("/guide/cache")
+async def clear_guide_cache():
+    _guide_cache.clear()
+    _guide_timestamps.clear()
+    return {"cleared": True, "message": "Guide cache cleared"}
 
 
 @router.post("/guide")
@@ -137,5 +144,7 @@ async def guide(
         "profile":      profile,
         "crop":         crop,
         "weather":      weather_summary,
-        "guide":        result.get("guide", {})
+        "guide":        result.get("guide", {}),
+        "ai_source":    result.get("ai_source", "preset"),
+        "rate_limited": result.get("rate_limited", False),
     }

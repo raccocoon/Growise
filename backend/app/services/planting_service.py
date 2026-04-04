@@ -4,6 +4,7 @@ Scores 30-day forecast to find best consecutive planting windows.
 """
 from datetime import datetime
 from typing import Optional, List, Dict, Tuple, Any
+from app.utils.confidence import weather_confidence
 
 
 # Crisis-safe crops (from spec)
@@ -220,6 +221,19 @@ def get_planting_windows(
     # Build final window objects (remove internal indices)
     result_windows = []
     for w in top_windows:
+        matching_day = next(
+            (d for d in forecast_30days if d["date"] == w["start_date"]),
+            None
+        )
+        if matching_day and "confidence" in matching_day:
+            conf_score = matching_day["confidence"]
+            conf_label = matching_day.get("confidence_label", "Medium")
+            conf_color = matching_day.get("confidence_color", "yellow")
+        else:
+            conf_score = 50
+            conf_label = "Medium"
+            conf_color = "yellow"
+
         result_windows.append({
             "start_date": w["start_date"],
             "end_date": w["end_date"],
@@ -230,8 +244,21 @@ def get_planting_windows(
             "total_rainfall": w["total_rainfall"],
             "best_time": w["best_time"],
             "best_time_reason": w["best_time_reason"],
-            "message": w["message"]
+            "message": w["message"],
+            "confidence": conf_score,
+            "confidence_label": conf_label,
+            "confidence_color": conf_color
         })
+
+    for score_day in daily_scores:
+        matching = next(
+            (d for d in forecast_30days if d["date"] == score_day["date"]),
+            None
+        )
+        if matching and "confidence" in matching:
+            score_day["confidence"] = matching["confidence"]
+            score_day["confidence_label"] = matching.get("confidence_label", "Medium")
+            score_day["confidence_color"] = matching.get("confidence_color", "yellow")
 
     return {
         "windows": result_windows,

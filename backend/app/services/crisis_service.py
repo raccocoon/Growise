@@ -15,6 +15,29 @@ def calculate_crisis_mode(forecast_6days: list) -> dict:
     Calculate crisis risk score from first 6 days of forecast.
     Returns crisis flag, warning flag, mode, score and triggers.
     """
+    try:
+        from app.routers.debug import CRISIS_OVERRIDE
+        if CRISIS_OVERRIDE["active"]:
+            return {
+                "crisis_flag":       True,
+                "warning_flag":      False,
+                "mode":              "CRISIS",
+                "risk_score":        90,
+                "triggers": [
+                    "Heavy rain 85mm on Day 1 (+40 points)",
+                    "3+ consecutive rain days (+15 points)",
+                    "Avg humidity 92% (+20 points)",
+                    "Avg temp 37.2°C (+15 points)",
+                ],
+                "avg_temp":          37.2,
+                "avg_humidity":      92.0,
+                "max_rainfall":      85.0,
+                "consecutive_rain":  6,
+                "crisis_safe_crops": CRISIS_SAFE_CROPS,
+                "calculated_at":     datetime.now().isoformat(),
+            }
+    except ImportError:
+        pass
 
     if not forecast_6days:
         return _normal_result()
