@@ -1,13 +1,13 @@
 # 🌱 GrowBuddy 
-### Smart Agricultural Advisory System for Malaysia
+### Smart Agricultural Advisory System for Sarawak
 
-> Helping Malaysian farmers make better decisions — from soil detection to AI-powered crop recommendations.
+> Helping Sarawakians farmers make better decisions — from soil detection to AI-powered crop recommendations.
 
 ---
 
 ## 📖 Project Overview
 
-GrowBuddy 2.0 is a smart agricultural advisory system built for Malaysian farmers — from smallholder growers in Sarawak to commercial plantation operators. It combines **real-time weather data**, **automatic soil detection**, **interactive farm mapping**, and **AI-powered crop recommendations** to help farmers make better decisions throughout the growing cycle.
+GrowBuddy is a smart agricultural advisory system built for Malaysian farmers — from smallholder growers in Sarawak to commercial plantation operators. It combines **real-time weather data**, **automatic soil detection**, **interactive farm mapping**, and **AI-powered crop recommendations** to help farmers make better decisions throughout the growing cycle.
 
 ### The Problem It Solves
 - Farmers don't know which crop suits their specific land and current weather conditions
@@ -175,4 +175,4 @@ App runs at **http://localhost:5173**
 
 ---
 
-> Built for Malaysian farmers. Powered by AI. 🌾
+> Built for Sarawakians farmers. Powered by AI. 🌾
