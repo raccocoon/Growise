@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.routers import (
     auth, profile, weather, recommend,
-    guide, planting, fertilize, planting_logs, pesticide, harvest, crisis, calendar, debug, chat
+    guide, planting, fertilize, planting_logs, pesticide, harvest, crisis, calendar, debug, chat, map
 )
 
 app = FastAPI(
@@ -34,5 +34,6 @@ app.include_router(crisis.router)
 app.include_router(calendar.router)
 app.include_router(debug.router)
 app.include_router(chat.router)
+app.include_router(map.router)
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
