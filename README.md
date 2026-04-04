@@ -1,4 +1,4 @@
-# 🌱 GrowBuddy 2.0
+# 🌱 GrowBuddy 
 ### Smart Agricultural Advisory System for Malaysia
 
 > Helping Malaysian farmers make better decisions — from soil detection to AI-powered crop recommendations.
